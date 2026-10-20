@@ -36,6 +36,6 @@ Ein selbstgehosteter, mobiler Web-Tracker (PWA) zur lÃ¼ckenlosen Dokumentation u
 
 ---
 
-##ğŸ”’ Datenschutz
+##ğ Ÿ”’ Datenschutz
 
 PersÃ¶nliche Daten, die lokale SQLite-Datenbank und hochgeladene Spuck-Fotos verbleiben ausschlieÃŸlich auf deinem Heimserver und sind Ã¼ber die .gitignore vom Ã¶ffentlichen Upload ausgeschlossen.
