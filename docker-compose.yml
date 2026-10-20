@@ -1,0 +1,11 @@
+services:
+  cat-tracker:
+    build: .
+    container_name: cat-food-tracker
+    restart: unless-stopped
+    ports:
+      - "8090:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Europe/Berlin

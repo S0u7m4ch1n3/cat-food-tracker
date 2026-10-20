@@ -1,0 +1,14 @@
+cat << 'EOF' > ~/cat-tracker/.gitignore
+# Lokale Datenbank & Bilduploads ausschließen
+data/
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+
+# Python & System-Dateien
+__pycache__/
+*.py[cod]
+.env
+.DS_Store
+EOF

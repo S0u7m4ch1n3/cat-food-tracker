@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Food & Vomit Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .cat-btn { transition: all 0.15s ease-in-out; user-select: none; }
+        .cat-btn:active { transform: scale(0.96); }
+    </style>
+    <!-- PWA Manifest und Theme Color -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+
+    <!-- iOS Support (Apple Touch Icon) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Futter">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- Header & Navigation (5 Reiter) -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-20">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🐾</span>
+                <h1 class="text-lg font-bold tracking-tight text-white">Katzenfutter & Spuck-Tracker</h1>
+            </div>
+            <nav class="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto justify-center">
+                <button onclick="switchTab('feed')" id="tab-btn-feed" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition">
+                    🍖 Fütterung
+                </button>
+                <button onclick="switchTab('vomit')" id="tab-btn-vomit" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    🤮 Spuck-Tracker
+                </button>
+                <button onclick="switchTab('history')" id="tab-btn-history" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    📋 Historie
+                </button>
+                <button onclick="switchTab('stats')" id="tab-btn-stats" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    📊 Auswertung
+                </button>
+                <button onclick="switchTab('stammdaten')" id="tab-btn-stammdaten" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    ⚙️ Stammdaten
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-8">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: FÜTTERUNG                           -->
+        <!-- ========================================== -->
+        <section id="tab-feed" class="space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <span>🥣</span> Neue Mahlzeit eintragen
+                    </h2>
+                    <span id="feed-toast" class="hidden text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700 px-3 py-1 rounded-full">
+                        ✅ Gespeichert!
+                    </span>
+                </div>
+
+                <form id="feeding-form" onsubmit="submitFeeding(event)" class="space-y-5">
+                    <!-- Katzen-Auswahl -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">Katzen auswählen</label>
+                            <button type="button" onclick="selectAllCats()" class="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                                Alle an-/abwählen
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="cat-buttons">
+                            <button type="button" onclick="toggleCat('Simsa')" id="cat-btn-Simsa" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
+                                <span>🐱</span> Simsa
+                            </button>
+                            <button type="button" onclick="toggleCat('BamBam')" id="cat-btn-BamBam" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
+                                <span>🐱</span> BamBam
+                            </button>
+                            <button type="button" onclick="toggleCat('LaBim')" id="cat-btn-LaBim" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
+                                <span>🐱</span> LaBim
+                            </button>
+                            <button type="button" onclick="toggleCat('Pebbles')" id="cat-btn-Pebbles" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
+                                <span>🐱</span> Pebbles
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kaskaden-Dropdown: Hersteller & Futter -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Hersteller</label>
+                            <select id="manufacturer-select" onchange="onManufacturerChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                                <!-- Dynamisch gefüllt -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Futtersorte</label>
+                            <select id="food-select" onchange="onFoodChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                                <!-- Dynamisch gefüllt -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bewertung & Zeitpunkt -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Wie kam es an?</label>
+                            <div class="grid grid-cols-3 gap-2" id="rating-buttons">
+                                <button type="button" onclick="setRating(3)" id="rate-3" class="py-2 px-2 rounded-xl border border-emerald-600 bg-emerald-950/60 text-emerald-300 text-xs font-medium text-center">
+                                    😍 Weggeatmet
+                                </button>
+                                <button type="button" onclick="setRating(2)" id="rate-2" class="py-2 px-2 rounded-xl border border-slate-700 bg-slate-800/40 text-slate-400 text-xs font-medium text-center">
+                                    😐 Okay
+                                </button>
+                                <button type="button" onclick="setRating(1)" id="rate-1" class="py-2 px-2 rounded-xl border border-slate-700 bg-slate-800/40 text-slate-400 text-xs font-medium text-center">
+                                    🤢 Verweigert
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Zeitpunkt</label>
+                            <input type="datetime-local" id="feeding-timestamp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Notiz & Speichern -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="feeding-notes" placeholder="Optionale Notiz (z.B. mit etwas Warmwasser)..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md">
+                            💾 Eintragen
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Kurze Vorschau der letzten 5 Einträge -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-slate-300">Zuletzt eingetragen</h3>
+                    <button onclick="switchTab('history')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                        Alle in der Historie ansehen &rarr;
+                    </button>
+                </div>
+                <div id="recent-feedings-preview" class="space-y-2">
+                    <!-- Dynamisch gefüllt -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- TAB 2: SPUCK-TRACKER                       -->
+        <!-- ========================================== -->
+        <section id="tab-vomit" class="hidden space-y-8">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                    <span>🚨</span> Spuck-Ereignis dokumentieren
+                </h2>
+
+                <form id="vomit-form" onsubmit="submitVomit(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Welche Katze?</label>
+                            <select id="vomit-cat" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500">
+                                <option value="Simsa">Simsa</option>
+                                <option value="BamBam">BamBam</option>
+                                <option value="LaBim">LaBim</option>
+                                <option value="Pebbles">Pebbles</option>
+                                <option value="Unbekannt">❓ Unbekannt (Fundstück)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Zeitpunkt</label>
+                            <input type="datetime-local" id="vomit-timestamp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Foto (optional)</label>
+                            <input type="file" id="vomit-image" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Details / Aussehen</label>
+                            <input type="text" id="vomit-notes" placeholder="z.B. Haarballen, unverdautes Futter, klarer Schaum..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md">
+                            🚨 Spuck-Eintrag speichern
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Spuck-Historie inkl. 12h-Korrelation -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                    <span>🔍</span> Spuck-Historie & 12h-Futter-Korrelation
+                </h2>
+                <div id="vomits-list" class="space-y-4">
+                    <!-- Dynamisch gefüllt -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- TAB 3: HISTORIE (FÜTTERUNGEN)              -->
+        <!-- ========================================== -->
+        <section id="tab-history" class="hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                            <span>📋</span> Komplette Fütterungs-Historie
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Filtere nach Katze oder bearbeite vergangene Mahlzeiten.</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="filter-buttons">
+                        <button onclick="setCatFilter('Alle')" id="filter-Alle" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white">Alle</button>
+                        <button onclick="setCatFilter('Simsa')" id="filter-Simsa" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Simsa</button>
+                        <button onclick="setCatFilter('BamBam')" id="filter-BamBam" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">BamBam</button>
+                        <button onclick="setCatFilter('LaBim')" id="filter-LaBim" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">LaBim</button>
+                        <button onclick="setCatFilter('Pebbles')" id="filter-Pebbles" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Pebbles</button>
+                    </div>
+                </div>
+
+                <div id="feedings-list" class="space-y-2.5">
+                    <!-- Dynamisch gefüllt -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- TAB 4: AUSWERTUNG & STATISTIK              -->
+        <!-- ========================================== -->
+        <section id="tab-stats" class="hidden space-y-6">
+            <!-- Kennzahlen-Karten oben -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="stats-kpi-cards">
+                <!-- Dynamisch gefüllt -->
+            </div>
+
+            <!-- Futter-Ranking -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                            <span>🏆</span> Futter-Beliebtheit & Akzeptanz
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Welche Sorten werden am liebsten gefressen?</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                        <button onclick="setStatsCatFilter('Alle')" id="stats-filter-Alle" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white">Alle Katzen</button>
+                        <button onclick="setStatsCatFilter('Simsa')" id="stats-filter-Simsa" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Simsa</button>
+                        <button onclick="setStatsCatFilter('BamBam')" id="stats-filter-BamBam" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">BamBam</button>
+                        <button onclick="setStatsCatFilter('LaBim')" id="stats-filter-LaBim" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">LaBim</button>
+                        <button onclick="setStatsCatFilter('Pebbles')" id="stats-filter-Pebbles" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Pebbles</button>
+                    </div>
+                </div>
+
+                <div id="stats-food-ranking" class="space-y-3">
+                    <!-- Dynamisch gefüllt -->
+                </div>
+            </div>
+
+            <!-- Spuck-Korrelation / Unverträglichkeits-Radar -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="mb-4 pb-3 border-b border-slate-800">
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <span>⚠️</span> Unverträglichkeits-Radar (12h vor Spuck-Ereignis)
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        Zeigt an, welches Futter wie oft in den 12 Stunden vor einem Spuck-Ereignis gefüttert wurde.
+                    </p>
+                </div>
+                <div id="stats-vomit-triggers" class="space-y-2.5">
+                    <!-- Dynamisch gefüllt -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- TAB 5: STAMMDATEN (HERSTELLER & FUTTER)    -->
+        <!-- ========================================== -->
+        <section id="tab-stammdaten" class="hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                            <span>⚙️</span> Hersteller & Futtersorten verwalten
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Hier kannst du Einträge umbenennen oder löschen. Beim Umbenennen wird die bisherige Historie automatisch aktualisiert.
+                        </p>
+                    </div>
+                    <button onclick="promptNewManufacturerFromStammdaten()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shrink-0">
+                        + Neuer Hersteller
+                    </button>
+                </div>
+
+                <div id="stammdaten-list" class="space-y-4">
+                    <!-- Dynamisch gefüllt -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODAL: FÜTTERUNG BEARBEITEN                -->
+    <!-- ========================================== -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-semibold text-white">✏️ Fütterung bearbeiten</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+
+            <form id="edit-feeding-form" onsubmit="submitEditFeeding(event)" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Katze</label>
+                    <select id="edit-cat" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        <option value="Simsa">Simsa</option>
+                        <option value="BamBam">BamBam</option>
+                        <option value="LaBim">LaBim</option>
+                        <option value="Pebbles">Pebbles</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Hersteller</label>
+                    <select id="edit-manufacturer" onchange="populateEditFoods()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Futtersorte</label>
+                    <select id="edit-food" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Bewertung</label>
+                    <select id="edit-rating" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        <option value="3">😍 Weggeatmet</option>
+                        <option value="2">😐 Okay</option>
+                        <option value="1">🤢 Verweigert</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Zeitpunkt</label>
+                    <input type="datetime-local" id="edit-timestamp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Notiz</label>
+                    <input type="text" id="edit-notes" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Abbrechen</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIK                           -->
+    <!-- ========================================== -->
+    <script>
+        let manufacturers = [];
+        let foods = [];
+        let allFeedings = [];
+        let vomits = [];
+
+        let selectedCats = new Set(['Simsa', 'BamBam', 'LaBim', 'Pebbles']);
+        let currentRating = 3;
+        let currentCatFilter = 'Alle';
+        let statsCatFilter = 'Alle';
+        let lastValidManufacturerId = null;
+        let lastValidFoodId = null;
+
+        const ratingBadges = {
+            3: '<span class="px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800/60 text-xs">😍 Weggeatmet</span>',
+            2: '<span class="px-2 py-0.5 rounded-md bg-amber-950 text-amber-300 border border-amber-800/60 text-xs">😐 Okay</span>',
+            1: '<span class="px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800/60 text-xs">🤢 Verweigert</span>'
+        };
+
+        function getLocalDatetimeString() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            return now.toISOString().slice(0, 16);
+        }
+
+        function formatDisplayDate(isoStr) {
+            if (!isoStr) return '';
+            const d = new Date(isoStr);
+            if (isNaN(d)) return isoStr;
+            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                   d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+        }
+
+        // --- TABS UMSCHALTEN ---
+        function switchTab(tab) {
+            ['feed', 'vomit', 'history', 'stats', 'stammdaten'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-btn-${t}`);
+                btn.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition";
+            });
+
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            activeBtn.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition";
+
+            if (tab === 'history') renderFeedingsHistory();
+            if (tab === 'vomit') loadVomits();
+            if (tab === 'stats') renderStats();
+            if (tab === 'stammdaten') renderStammdaten();
+        }
+
+        // --- KATZEN & BEWERTUNG AUSWAHL ---
+        function updateCatButtonsUI() {
+            ['Simsa', 'BamBam', 'LaBim', 'Pebbles'].forEach(cat => {
+                const btn = document.getElementById(`cat-btn-${cat}`);
+                if (selectedCats.has(cat)) {
+                    btn.className = "cat-btn py-2.5 px-3 rounded-xl border border-blue-500 bg-blue-950/70 text-blue-200 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm";
+                } else {
+                    btn.className = "cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-400 font-medium text-sm flex items-center justify-center gap-2";
+                }
+            });
+        }
+
+        function toggleCat(cat) {
+            if (selectedCats.has(cat)) {
+                selectedCats.delete(cat);
+            } else {
+                selectedCats.add(cat);
+            }
+            updateCatButtonsUI();
+        }
+
+        function selectAllCats() {
+            if (selectedCats.size === 4) {
+                selectedCats.clear();
+            } else {
+                selectedCats = new Set(['Simsa', 'BamBam', 'LaBim', 'Pebbles']);
+            }
+            updateCatButtonsUI();
+        }
+
+        function setRating(val) {
+            currentRating = val;
+            const styles = {
+                3: "py-2 px-2 rounded-xl border border-emerald-500 bg-emerald-950/70 text-emerald-300 text-xs font-semibold text-center",
+                2: "py-2 px-2 rounded-xl border border-amber-500 bg-amber-950/70 text-amber-300 text-xs font-semibold text-center",
+                1: "py-2 px-2 rounded-xl border border-rose-500 bg-rose-950/70 text-rose-300 text-xs font-semibold text-center"
+            };
+            const inactive = "py-2 px-2 rounded-xl border border-slate-700 bg-slate-800/40 text-slate-400 text-xs font-medium text-center";
+
+            [1, 2, 3].forEach(r => {
+                document.getElementById(`rate-${r}`).className = (r === val) ? styles[r] : inactive;
+            });
+        }
+
+        // --- DATEN VOM BACKEND LADEN ---
+        async function loadAllData() {
+            const [manRes, foodRes, feedRes, vomitRes] = await Promise.all([
+                fetch('/api/manufacturers'),
+                fetch('/api/foods'),
+                fetch('/api/feedings?limit=500'),
+                fetch('/api/vomits?limit=200')
+            ]);
+            manufacturers = await manRes.json();
+            foods = await foodRes.json();
+            allFeedings = await feedRes.json();
+            vomits = await vomitRes.json();
+
+            populateManufacturerSelect(lastValidManufacturerId);
+            renderRecentPreview();
+            renderFeedingsHistory();
+            renderStammdaten();
+            renderStats();
+        }
+
+        function populateManufacturerSelect(selectedId = null) {
+            const sel = document.getElementById('manufacturer-select');
+            sel.innerHTML = '';
+
+            manufacturers.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                sel.appendChild(opt);
+            });
+
+            const addOpt = document.createElement('option');
+            addOpt.value = '__new__';
+            addOpt.textContent = '➕ Neuen Hersteller hinzufügen...';
+            sel.appendChild(addOpt);
+
+            if (selectedId && manufacturers.some(m => m.id == selectedId)) {
+                sel.value = selectedId;
+            } else if (manufacturers.length > 0) {
+                sel.value = manufacturers[0].id;
+            }
+
+            lastValidManufacturerId = sel.value !== '__new__' ? parseInt(sel.value) : null;
+            populateFoodSelect(lastValidFoodId);
+        }
+
+        function populateFoodSelect(selectedFoodId = null) {
+            const manId = parseInt(document.getElementById('manufacturer-select').value);
+            const sel = document.getElementById('food-select');
+            sel.innerHTML = '';
+
+            const filtered = foods.filter(f => f.manufacturer_id === manId);
+            filtered.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name;
+                sel.appendChild(opt);
+            });
+
+            const addOpt = document.createElement('option');
+            addOpt.value = '__new__';
+            addOpt.textContent = '➕ Neues Futter hinzufügen...';
+            sel.appendChild(addOpt);
+
+            if (selectedFoodId && filtered.some(f => f.id == selectedFoodId)) {
+                sel.value = selectedFoodId;
+            } else if (filtered.length > 0) {
+                sel.value = filtered[0].id;
+            }
+
+            lastValidFoodId = sel.value !== '__new__' ? parseInt(sel.value) : null;
+        }
+
+        async function onManufacturerChange() {
+            const sel = document.getElementById('manufacturer-select');
+            if (sel.value === '__new__') {
+                const name = prompt("Name des neuen Herstellers:");
+                if (name && name.trim()) {
+                    const res = await fetch('/api/manufacturers', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name.trim() })
+                    });
+                    if (res.ok) {
+                        const created = await res.json();
+                        lastValidManufacturerId = created.id;
+                        await loadAllData();
+                        return;
+                    }
+                }
+                if (lastValidManufacturerId) sel.value = lastValidManufacturerId;
+            } else {
+                lastValidManufacturerId = parseInt(sel.value);
+                lastValidFoodId = null;
+                populateFoodSelect();
+            }
+        }
+
+        async function onFoodChange() {
+            const sel = document.getElementById('food-select');
+            const manId = parseInt(document.getElementById('manufacturer-select').value);
+            if (sel.value === '__new__') {
+                if (!manId || isNaN(manId)) {
+                    alert("Bitte zuerst einen gültigen Hersteller auswählen.");
+                    return;
+                }
+                const name = prompt("Name der neuen Futtersorte:");
+                if (name && name.trim()) {
+                    const res = await fetch('/api/foods', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ manufacturer_id: manId, name: name.trim() })
+                    });
+                    if (res.ok) {
+                        const created = await res.json();
+                        lastValidFoodId = created.id;
+                        await loadAllData();
+                        return;
+                    }
+                }
+                if (lastValidFoodId) sel.value = lastValidFoodId;
+            } else {
+                lastValidFoodId = parseInt(sel.value);
+            }
+        }
+
+        // --- FÜTTERUNG SPEICHERN ---
+        async function submitFeeding(e) {
+            e.preventDefault();
+            if (selectedCats.size === 0) {
+                alert("Bitte wähle mindestens eine Katze aus!");
+                return;
+            }
+            const manId = parseInt(document.getElementById('manufacturer-select').value);
+            const foodId = parseInt(document.getElementById('food-select').value);
+            if (!manId || !foodId || isNaN(manId) || isNaN(foodId)) {
+                alert("Bitte Hersteller und Futtersorte auswählen!");
+                return;
+            }
+
+            const payload = {
+                cats: Array.from(selectedCats),
+                manufacturer_id: manId,
+                food_id: foodId,
+                rating: currentRating,
+                notes: document.getElementById('feeding-notes').value.trim(),
+                timestamp: document.getElementById('feeding-timestamp').value
+            };
+
+            const res = await fetch('/api/feedings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                document.getElementById('feeding-notes').value = '';
+                document.getElementById('feeding-timestamp').value = getLocalDatetimeString();
+                const toast = document.getElementById('feed-toast');
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 2500);
+                await loadAllData();
+            } else {
+                alert("Fehler beim Speichern der Fütterung.");
+            }
+        }
+
+        // --- VORSCHAU & HISTORIE RENDERN ---
+        function renderRecentPreview() {
+            const container = document.getElementById('recent-feedings-preview');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const recent = allFeedings.slice(0, 5);
+            if (recent.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 italic py-2">Noch keine Mahlzeiten eingetragen.</p>';
+                return;
+            }
+
+            recent.forEach(f => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-950 border border-slate-800/70 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs";
+                div.innerHTML = `
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-bold text-blue-400">${f.cat_name}</span>
+                        <span class="text-slate-200">${f.manufacturer_name} – ${f.food_name}</span>
+                        ${ratingBadges[f.rating] || ''}
+                    </div>
+                    <span class="text-slate-500 shrink-0">${formatDisplayDate(f.timestamp)}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function setCatFilter(cat) {
+            currentCatFilter = cat;
+            ['Alle', 'Simsa', 'BamBam', 'LaBim', 'Pebbles'].forEach(c => {
+                const btn = document.getElementById(`filter-${c}`);
+                btn.className = (c === cat)
+                    ? "px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white"
+                    : "px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white";
+            });
+            renderFeedingsHistory();
+        }
+
+        function renderFeedingsHistory() {
+            const container = document.getElementById('feedings-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const filtered = currentCatFilter === 'Alle'
+                ? allFeedings
+                : allFeedings.filter(f => f.cat_name === currentCatFilter);
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 italic py-4 text-center">Keine Fütterungen für diesen Filter gefunden.</p>';
+                return;
+            }
+
+            filtered.forEach(f => {
+                const row = document.createElement('div');
+                row.className = "bg-slate-950 border border-slate-800/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2";
+                row.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-bold text-sm text-blue-400">${f.cat_name}</span>
+                            <span class="text-sm font-medium text-white">${f.manufacturer_name} – ${f.food_name}</span>
+                            ${ratingBadges[f.rating] || ''}
+                        </div>
+                        <div class="text-xs text-slate-400 flex flex-wrap items-center gap-3">
+                            <span>🕒 ${formatDisplayDate(f.timestamp)}</span>
+                            ${f.notes ? `<span class="text-slate-300 italic">💬 "${f.notes}"</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                        <button onclick="openEditModal(${f.id})" class="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs border border-slate-800" title="Bearbeiten">
+                            ✏️
+                        </button>
+                        <button onclick="deleteFeeding(${f.id})" class="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-950 text-rose-400 text-xs border border-slate-800" title="Löschen">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        async function deleteFeeding(id) {
+            if (!confirm("Diesen Fütterungs-Eintrag wirklich löschen?")) return;
+            await fetch(`/api/feedings/${id}`, { method: 'DELETE' });
+            await loadAllData();
+        }
+
+        // --- MODAL: FÜTTERUNG BEARBEITEN ---
+        function openEditModal(id) {
+            const f = allFeedings.find(item => item.id === id);
+            if (!f) return;
+
+            document.getElementById('edit-id').value = f.id;
+            document.getElementById('edit-cat').value = f.cat_name;
+            document.getElementById('edit-rating').value = f.rating;
+            document.getElementById('edit-timestamp').value = f.timestamp.slice(0, 16);
+            document.getElementById('edit-notes').value = f.notes || '';
+
+            const manSel = document.getElementById('edit-manufacturer');
+            manSel.innerHTML = '';
+            manufacturers.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                manSel.appendChild(opt);
+            });
+            if (f.manufacturer_id) manSel.value = f.manufacturer_id;
+
+            populateEditFoods(f.food_id);
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function populateEditFoods(selectedFoodId = null) {
+            const manId = parseInt(document.getElementById('edit-manufacturer').value);
+            const foodSel = document.getElementById('edit-food');
+            foodSel.innerHTML = '';
+            foods.filter(x => x.manufacturer_id === manId).forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                foodSel.appendChild(opt);
+            });
+            if (selectedFoodId) foodSel.value = selectedFoodId;
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        async function submitEditFeeding(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const payload = {
+                cat_name: document.getElementById('edit-cat').value,
+                manufacturer_id: parseInt(document.getElementById('edit-manufacturer').value),
+                food_id: parseInt(document.getElementById('edit-food').value),
+                rating: parseInt(document.getElementById('edit-rating').value),
+                timestamp: document.getElementById('edit-timestamp').value,
+                notes: document.getElementById('edit-notes').value.trim()
+            };
+
+            const res = await fetch(`/api/feedings/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                closeEditModal();
+                await loadAllData();
+            } else {
+                alert("Fehler beim Aktualisieren.");
+            }
+        }
+
+        // --- SPUCK-TRACKER ---
+        async function submitVomit(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('cat_name', document.getElementById('vomit-cat').value);
+            formData.append('timestamp', document.getElementById('vomit-timestamp').value);
+            formData.append('notes', document.getElementById('vomit-notes').value.trim());
+
+            const fileInput = document.getElementById('vomit-image');
+            if (fileInput.files.length > 0) {
+                formData.append('image', fileInput.files[0]);
+            }
+
+            const res = await fetch('/api/vomits', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                document.getElementById('vomit-notes').value = '';
+                fileInput.value = '';
+                document.getElementById('vomit-timestamp').value = getLocalDatetimeString();
+                await loadAllData();
+                loadVomits();
+            } else {
+                alert("Fehler beim Speichern des Spuck-Eintrags.");
+            }
+        }
+
+        async function loadVomits() {
+            const res = await fetch('/api/vomits');
+            vomits = await res.json();
+            const container = document.getElementById('vomits-list');
+            container.innerHTML = '';
+
+            if (vomits.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 italic py-4 text-center">Keine Spuck-Ereignisse dokumentiert.</p>';
+                return;
+            }
+
+            vomits.forEach(v => {
+                let correlationHtml = '';
+                if (v.recent_feedings && v.recent_feedings.length > 0) {
+                    const items = v.recent_feedings.map(rf =>
+                        `<li class="text-xs text-amber-200/90">• <strong>${rf.cat_name}</strong>: ${rf.manufacturer_name} – ${rf.food_name} <span class="text-slate-400">(${formatDisplayDate(rf.timestamp)})</span></li>`
+                    ).join('');
+                    correlationHtml = `
+                        <div class="mt-2.5 bg-amber-950/40 border border-amber-800/50 rounded-lg p-2.5">
+                            <p class="text-xs font-semibold text-amber-300 mb-1">⚠️ Fütterungen in den 12h zuvor:</p>
+                            <ul class="space-y-1">${items}</ul>
+                        </div>
+                    `;
+                } else {
+                    correlationHtml = `
+                        <div class="mt-2 text-xs text-slate-500 italic">
+                            ℹ️ Keine Fütterung in den 12 Stunden zuvor dokumentiert.
+                        </div>
+                    `;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4";
+                card.innerHTML = `
+                    <div class="flex-1 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-rose-400">🤮 ${v.cat_name}</span>
+                                <span class="text-xs text-slate-400">🕒 ${formatDisplayDate(v.timestamp)}</span>
+                            </div>
+                            <button onclick="deleteVomit(${v.id})" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-slate-900 border border-slate-800">
+                                🗑️
+                            </button>
+                        </div>
+                        ${v.notes ? `<p class="text-xs text-slate-200 mt-1">💬 "${v.notes}"</p>` : ''}
+                        ${correlationHtml}
+                    </div>
+                    ${v.image_path ? `
+                        <a href="${v.image_path}" target="_blank" class="shrink-0">
+                            <img src="${v.image_path}" alt="Spuck-Foto" class="w-24 h-24 object-cover rounded-lg border border-slate-700 hover:opacity-90 transition">
+                        </a>
+                    ` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function deleteVomit(id) {
+            if (!confirm("Diesen Spuck-Eintrag inklusive Foto wirklich löschen?")) return;
+            await fetch(`/api/vomits/${id}`, { method: 'DELETE' });
+            await loadAllData();
+            loadVomits();
+        }
+
+        // --- TAB 4: AUSWERTUNG & STATISTIK ---
+        function setStatsCatFilter(cat) {
+            statsCatFilter = cat;
+            ['Alle', 'Simsa', 'BamBam', 'LaBim', 'Pebbles'].forEach(c => {
+                const btn = document.getElementById(`stats-filter-${c}`);
+                btn.className = (c === cat)
+                    ? "px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white"
+                    : "px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white";
+            });
+            renderStats();
+        }
+
+        function renderStats() {
+            const kpiContainer = document.getElementById('stats-kpi-cards');
+            const rankingContainer = document.getElementById('stats-food-ranking');
+            const triggerContainer = document.getElementById('stats-vomit-triggers');
+            if (!kpiContainer || !rankingContainer || !triggerContainer) return;
+
+            const filteredFeedings = statsCatFilter === 'Alle'
+                ? allFeedings
+                : allFeedings.filter(f => f.cat_name === statsCatFilter);
+
+            const totalMeals = filteredFeedings.length;
+            const avgScore = totalMeals > 0
+                ? (filteredFeedings.reduce((acc, x) => acc + x.rating, 0) / totalMeals).toFixed(2)
+                : '–';
+            const totalVomits = statsCatFilter === 'Alle'
+                ? vomits.length
+                : vomits.filter(v => v.cat_name === statsCatFilter).length;
+
+            kpiContainer.innerHTML = `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <p class="text-xs text-slate-400 uppercase">Erfasste Mahlzeiten (${statsCatFilter})</p>
+                    <p class="text-2xl font-bold text-white mt-1">${totalMeals}</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <p class="text-xs text-slate-400 uppercase">Ø Akzeptanz (1 bis 3)</p>
+                    <p class="text-2xl font-bold text-emerald-400 mt-1">${avgScore} <span class="text-xs text-slate-400 font-normal">/ 3.00</span></p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <p class="text-xs text-slate-400 uppercase">Spuck-Ereignisse (${statsCatFilter})</p>
+                    <p class="text-2xl font-bold text-rose-400 mt-1">${totalVomits}</p>
+                </div>
+            `;
+
+            // Futter-Beliebtheit gruppieren
+            const foodStats = {};
+            filteredFeedings.forEach(f => {
+                const key = `${f.manufacturer_name} – ${f.food_name}`;
+                if (!foodStats[key]) {
+                    foodStats[key] = { label: key, count: 0, sumRating: 0, loved: 0, ok: 0, refused: 0 };
+                }
+                foodStats[key].count++;
+                foodStats[key].sumRating += f.rating;
+                if (f.rating === 3) foodStats[key].loved++;
+                if (f.rating === 2) foodStats[key].ok++;
+                if (f.rating === 1) foodStats[key].refused++;
+            });
+
+            const sortedFoods = Object.values(foodStats).sort((a, b) => {
+                const avgA = a.sumRating / a.count;
+                const avgB = b.sumRating / b.count;
+                if (avgB !== avgA) return avgB - avgA;
+                return b.count - a.count;
+            });
+
+            if (sortedFoods.length === 0) {
+                rankingContainer.innerHTML = '<p class="text-xs text-slate-500 italic py-4 text-center">Noch keine Fütterungsdaten für diese Auswahl vorhanden.</p>';
+            } else {
+                rankingContainer.innerHTML = '';
+                sortedFoods.forEach(item => {
+                    const avg = (item.sumRating / item.count).toFixed(1);
+                    const pct = Math.round(((item.sumRating / item.count) / 3) * 100);
+                    const barColor = avg >= 2.5 ? 'bg-emerald-500' : (avg >= 1.8 ? 'bg-amber-500' : 'bg-rose-500');
+
+                    const div = document.createElement('div');
+                    div.className = "bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2";
+                    div.innerHTML = `
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="font-semibold text-sm text-white">${item.label}</span>
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="text-emerald-400">😍 ${item.loved}x</span>
+                                <span class="text-amber-400">😐 ${item.ok}x</span>
+                                <span class="text-rose-400">🤢 ${item.refused}x</span>
+                                <span class="bg-slate-800 text-slate-200 px-2 py-0.5 rounded font-semibold">Ø ${avg} / 3</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    `;
+                    rankingContainer.appendChild(div);
+                });
+            }
+
+            // Spuck-Trigger berechnen
+            const triggerCounts = {};
+            vomits.forEach(v => {
+                if (statsCatFilter !== 'Alle' && v.cat_name !== statsCatFilter && v.cat_name !== 'Unbekannt') return;
+                if (v.recent_feedings && v.recent_feedings.length > 0) {
+                    // Pro Spuck-Ereignis jede involvierte Sorte einmal zählen
+                    const uniqueInEvent = new Set();
+                    v.recent_feedings.forEach(rf => {
+                        if (statsCatFilter === 'Alle' || rf.cat_name === statsCatFilter) {
+                            uniqueInEvent.add(`${rf.manufacturer_name} – ${rf.food_name}`);
+                        }
+                    });
+                    uniqueInEvent.forEach(foodKey => {
+                        triggerCounts[foodKey] = (triggerCounts[foodKey] || 0) + 1;
+                    });
+                }
+            });
+
+            const sortedTriggers = Object.entries(triggerCounts).sort((a, b) => b[1] - a[1]);
+            if (sortedTriggers.length === 0) {
+                triggerContainer.innerHTML = '<p class="text-xs text-slate-500 italic py-3 text-center">Bisher wurden keine Futtersorten in den 12 Stunden vor einem Spuck-Ereignis gefunden.</p>';
+            } else {
+                triggerContainer.innerHTML = '';
+                sortedTriggers.forEach(([foodLabel, count]) => {
+                    const row = document.createElement('div');
+                    row.className = "bg-rose-950/20 border border-rose-900/50 rounded-xl px-3.5 py-2.5 flex items-center justify-between";
+                    row.innerHTML = `
+                        <span class="text-sm font-medium text-rose-200">${foodLabel}</span>
+                        <span class="text-xs font-bold bg-rose-900/70 text-rose-200 px-2.5 py-1 rounded-lg">
+                            ${count}x vor Spucken gefüttert
+                        </span>
+                    `;
+                    triggerContainer.appendChild(row);
+                });
+            }
+        }
+
+        // --- TAB 5: STAMMDATEN VERWALTUNG ---
+        function renderStammdaten() {
+            const container = document.getElementById('stammdaten-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (manufacturers.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 italic text-center py-4">Noch keine Hersteller vorhanden.</p>';
+                return;
+            }
+
+            manufacturers.forEach(man => {
+                const manFoods = foods.filter(f => f.manufacturer_id === man.id);
+                const safeManName = man.name.replace(/'/g, "\\'");
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3";
+
+                let foodsHtml = '';
+                if (manFoods.length === 0) {
+                    foodsHtml = '<p class="text-xs text-slate-500 italic">Keine Futtersorten für diesen Hersteller hinterlegt.</p>';
+                } else {
+                    foodsHtml = '<ul class="space-y-1.5">';
+                    manFoods.forEach(food => {
+                        const safeFoodName = food.name.replace(/'/g, "\\'");
+                        foodsHtml += `
+                            <li class="flex items-center justify-between bg-slate-900/70 px-3 py-2 rounded-lg border border-slate-800/60">
+                                <span class="text-sm text-slate-200">${food.name}</span>
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="editFood(${food.id}, '${safeFoodName}', ${man.id})" class="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md transition">
+                                        ✏️ Umbenennen
+                                    </button>
+                                    <button onclick="deleteFood(${food.id}, '${safeFoodName}')" class="px-2 py-1 text-xs bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-900/50 rounded-md transition">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    foodsHtml += '</ul>';
+                }
+
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-blue-400 text-sm sm:text-base">${man.name}</span>
+                            <span class="text-xs bg-slate-900 text-slate-400 px-2 py-0.5 rounded-full border border-slate-800">${manFoods.length} Sorten</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="promptNewFoodFromStammdaten(${man.id}, '${safeManName}')" class="px-2.5 py-1 text-xs bg-blue-950/70 hover:bg-blue-900 text-blue-300 border border-blue-800/60 rounded-lg transition">
+                                + Sorte
+                            </button>
+                            <button onclick="editManufacturer(${man.id}, '${safeManName}')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition">
+                                ✏️ Hersteller
+                            </button>
+                            <button onclick="deleteManufacturer(${man.id}, '${safeManName}')" class="px-2.5 py-1 text-xs bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-900/50 rounded-lg transition">
+                                🗑️ Hersteller
+                            </button>
+                        </div>
+                    </div>
+                    ${foodsHtml}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function promptNewManufacturerFromStammdaten() {
+            const name = prompt("Name des neuen Herstellers:");
+            if (!name || !name.trim()) return;
+            const res = await fetch('/api/manufacturers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim() })
+            });
+            if (res.ok) await loadAllData();
+        }
+
+        async function promptNewFoodFromStammdaten(manId, manName) {
+            const name = prompt(`Neue Futtersorte für "${manName}" eingeben:`);
+            if (!name || !name.trim()) return;
+            const res = await fetch('/api/foods', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ manufacturer_id: manId, name: name.trim() })
+            });
+            if (res.ok) await loadAllData();
+        }
+
+        async function editManufacturer(id, currentName) {
+            const newName = prompt("Hersteller umbenennen:", currentName);
+            if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+            const res = await fetch(`/api/manufacturers/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName.trim() })
+            });
+            if (res.ok) {
+                await loadAllData();
+            } else {
+                alert("Fehler beim Umbenennen des Herstellers.");
+            }
+        }
+
+        async function deleteManufacturer(id, name) {
+            if (!confirm(`Hersteller "${name}" inklusive ALLER zugehörigen Futtersorten wirklich löschen?\n\n(Bereits protokollierte Fütterungen in der Historie bleiben erhalten).`)) return;
+            const res = await fetch(`/api/manufacturers/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                await loadAllData();
+            } else {
+                alert("Fehler beim Löschen des Herstellers.");
+            }
+        }
+
+        async function editFood(id, currentName, manufacturerId) {
+            const newName = prompt("Futtersorte umbenennen:", currentName);
+            if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+            const res = await fetch(`/api/foods/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName.trim(), manufacturer_id: manufacturerId })
+            });
+            if (res.ok) {
+                await loadAllData();
+            } else {
+                alert("Fehler beim Umbenennen der Futtersorte.");
+            }
+        }
+
+        async function deleteFood(id, name) {
+            if (!confirm(`Futtersorte "${name}" wirklich aus der Auswahl löschen?`)) return;
+            const res = await fetch(`/api/foods/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                await loadAllData();
+            } else {
+                alert("Fehler beim Löschen der Futtersorte.");
+            }
+        }
+
+        // --- INITIALISIERUNG ---
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('feeding-timestamp').value = getLocalDatetimeString();
+            document.getElementById('vomit-timestamp').value = getLocalDatetimeString();
+            updateCatButtonsUI();
+            setRating(3);
+            loadAllData();
+        });
+    </script>
+</body>
+</html>
