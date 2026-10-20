@@ -28,11 +28,12 @@ Ein selbstgehosteter, mobiler Web-Tracker (PWA) zur lückenlosen Dokumentation u
    cd cat-tracker
 
 2. Container bauen und starten:
+   ```bash
    docker compose up -d --build
 
 3. Aufrufen:
    Die App läuft standardmäßig auf Port 8000 (oder über deinen Reverse Proxy / Nginx Proxy Manager mit lokalem AdGuard/DNS-Rewrite).
 
-🔒 Datenschutz
+##🔒 Datenschutz
 
 Persönliche Daten, die lokale SQLite-Datenbank und hochgeladene Spuck-Fotos verbleiben ausschließlich auf deinem Heimserver und sind über die .gitignore vom öffentlichen Upload ausgeschlossen.
