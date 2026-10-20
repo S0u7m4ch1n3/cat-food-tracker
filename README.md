@@ -11,7 +11,7 @@ Ein selbstgehosteter, mobiler Web-Tracker (PWA) zur lückenlosen Dokumentation u
 
 ## ✨ Features
 
-- **🥣 Schnelle Fütterungserfassung:** Multi-Katzen-Auswahl (Simsa, BamBam, LaBim, …) für eine schnelle Erfassung von Mahlzeiten.
+- **🥣 Schnelle Fütterungserfassung:** Multi-Katzen-Auswahl für eine schnelle Erfassung von Mahlzeiten.
 - **🤮 Spuck-Tracker mit 12h-Korrelation:** Dokumentation von Spuck-Ereignissen (inkl. Foto-Upload) mit automatischer Zuordnung zu den Mahlzeiten der letzten 12 Stunden.
 - **📊 Auswertung & Statistik:** Automatische Rankings der Lieblingssorten (mit Akzeptanz-Quote) und Auswertung der Verträglichkeit.
 - **📋 Komplette Historie & Stammdaten:** Mahlzeiten filtern, bearbeiten oder löschen sowie Katzen und Futtersorten verwalten.
