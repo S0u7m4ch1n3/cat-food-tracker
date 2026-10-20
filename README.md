@@ -34,6 +34,8 @@ Ein selbstgehosteter, mobiler Web-Tracker (PWA) zur lückenlosen Dokumentation u
 3. Aufrufen:
    Die App läuft standardmäßig auf Port 8000 (oder über deinen Reverse Proxy / Nginx Proxy Manager mit lokalem AdGuard/DNS-Rewrite).
 
+---
+
 ##🔒 Datenschutz
 
 Persönliche Daten, die lokale SQLite-Datenbank und hochgeladene Spuck-Fotos verbleiben ausschließlich auf deinem Heimserver und sind über die .gitignore vom öffentlichen Upload ausgeschlossen.
