@@ -11,11 +11,16 @@ Ein selbstgehosteter, mobiler Web-Tracker (PWA) zur lückenlosen Dokumentation u
 
 ## ✨ Features
 
-- **🍖 Schnelle Fütterungserfassung:** Multi-Katzen-Auswahl (Simsa, BamBam, LaBim, Pebbles), Kaskaden-Dropdown für Hersteller und Sorten (mit dynamischer "Neu hinzufügen"-Funktion) sowie Akzeptanz-Bewertungen (*Weggeatmet*, *Okay*, *Verweigert*).
+- **🥣 Schnelle Fütterungserfassung:** Multi-Katzen-Auswahl (Simsa, BamBam, LaBim, Pebbles), Kaskaden-Dropdown für Hersteller und Sorten (mit dynamischer "Neu hinzufügen"-Funktion) sowie Akzeptanz-Bewertungen (*Weggeatmet*, *Okay*, *Verweigert*).
+
 - **🤮 Spuck-Tracker mit 12h-Korrelation:** Dokumentation von Spuck-Ereignissen (inkl. Foto-Upload) und automatischer Rückwärtssuche in der Datenbank: *Welche Katze hat in den letzten 12 Stunden was gefressen?*
+
 - **📊 Auswertung & Statistik:** Automatische Rankings der Lieblingssorten (mit Akzeptanz-Durchschnitt) und ein "Unverträglichkeits-Radar", das potenzielle Futter-Auslöser vor Spuck-Vorfällen aufdeckt.
+
 - **📋 Komplette Historie & Stammdaten:** Mahlzeiten filtern, bearbeiten oder löschen sowie ein eigener Administrations-Reiter zum Umbenennen und Bereinigen von Herstellern und Futtersorten (inkl. automatischer Historien-Synchronisation).
+
 - **📱 PWA (Progressive Web App):** Lässt sich nahtlos auf dem Smartphone-Homescreen installieren (Fullscreen ohne Browser-Adressleiste).
+
 - **🔒 Lokale Datensouveränität:** Läuft komplett selbstgehostet in einem Docker-Container auf SQLite-Basis.
 
 ---
@@ -26,16 +31,3 @@ Ein selbstgehosteter, mobiler Web-Tracker (PWA) zur lückenlosen Dokumentation u
    ```bash
    git clone [https://github.com/S0u7m4ch1n3/cat-food-tracker.git](https://github.com/S0u7m4ch1n3/cat-food-tracker.git)
    cd cat-tracker
-
-2. Container bauen und starten:
-   ```bash
-   docker compose up -d --build
-
-3. Aufrufen:
-   Die App läuft standardmäßig auf Port 8000 (oder über deinen Reverse Proxy / Nginx Proxy Manager mit lokalem AdGuard/DNS-Rewrite).
-
----
-
-##� ��� Datenschutz
-
-Persönliche Daten, die lokale SQLite-Datenbank und hochgeladene Spuck-Fotos verbleiben ausschließlich auf deinem Heimserver und sind über die .gitignore vom öffentlichen Upload ausgeschlossen.
