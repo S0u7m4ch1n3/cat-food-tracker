@@ -2,7 +2,7 @@ import os
 import sqlite3
 import shutil
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -30,7 +30,6 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
 
-    # Tabelle: Hersteller
     c.execute("""
         CREATE TABLE IF NOT EXISTS manufacturers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +37,6 @@ def init_db():
         )
     """)
 
-    # Tabelle: Futtersorten
     c.execute("""
         CREATE TABLE IF NOT EXISTS foods (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +47,6 @@ def init_db():
         )
     """)
 
-    # Tabelle: Fütterungen
     c.execute("""
         CREATE TABLE IF NOT EXISTS feedings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +61,6 @@ def init_db():
         )
     """)
 
-    # Tabelle: Spuck-Ereignisse
     c.execute("""
         CREATE TABLE IF NOT EXISTS vomits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +71,6 @@ def init_db():
         )
     """)
 
-    # Standard-Einträge anlegen, falls Datenbank noch komplett leer ist
     c.execute("SELECT COUNT(*) as cnt FROM manufacturers")
     if c.fetchone()["cnt"] == 0:
         default_data = {
@@ -114,10 +109,9 @@ class FoodUpdate(BaseModel):
     name: str
 
 class FeedingCreate(BaseModel):
-    cats: List[str]
+    cat_ratings: Dict[str, int]  # {"Simsa": 3, "BamBam": 1}
     manufacturer_id: int
     food_id: int
-    rating: int
     notes: Optional[str] = ""
     timestamp: Optional[str] = None
 
@@ -130,7 +124,7 @@ class FeedingUpdate(BaseModel):
     timestamp: str
 
 
-# --- ROUTEN: STAMMDATEN (HERSTELLER & FUTTER) ---
+# --- ROUTEN: STAMMDATEN ---
 
 @app.get("/api/manufacturers")
 def get_manufacturers():
@@ -276,7 +270,7 @@ def get_feedings(cat: Optional[str] = None, limit: int = 200):
 
 @app.post("/api/feedings")
 def create_feeding(data: FeedingCreate):
-    if not data.cats:
+    if not data.cat_ratings:
         raise HTTPException(status_code=400, detail="Mindestens eine Katze auswählen")
 
     conn = get_db()
@@ -291,11 +285,11 @@ def create_feeding(data: FeedingCreate):
     ts = data.timestamp if data.timestamp else datetime.now().strftime("%Y-%m-%dT%H:%M")
 
     created_ids = []
-    for cat in data.cats:
+    for cat_name, rating in data.cat_ratings.items():
         c.execute("""
             INSERT INTO feedings (cat_name, manufacturer_id, food_id, manufacturer_name, food_name, rating, notes, timestamp)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (cat, data.manufacturer_id, data.food_id, man["name"], food["name"], data.rating, data.notes, ts))
+        """, (cat_name, data.manufacturer_id, data.food_id, man["name"], food["name"], rating, data.notes, ts))
         created_ids.append(c.lastrowid)
 
     conn.commit()
