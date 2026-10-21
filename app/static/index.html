@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Food & Vomit Tracker</title>
+    <title>Futter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
         .cat-btn { transition: all 0.15s ease-in-out; user-select: none; }
         .cat-btn:active { transform: scale(0.96); }
     </style>
-    <!-- PWA Manifest und Theme Color -->
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#3b82f6">
-
-    <!-- iOS Support (Apple Touch Icon) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Futter">
@@ -22,30 +19,35 @@
 </head>
 <body class="min-h-screen pb-16">
 
-    <!-- Header & Navigation (5 Reiter) -->
+    <!-- ========================================== -->
+    <!-- HEADER & NAVIGATION                        -->
+    <!-- ========================================== -->
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-20">
         <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">🐾</span>
-                <h1 class="text-lg font-bold tracking-tight text-white">Katzenfutter & Spuck-Tracker</h1>
+            <div class="flex items-center justify-between w-full sm:w-auto">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🐾</span>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Futter</h1>
+                </div>
+                <!-- Sprachumschalter (Mobil rechts oben) -->
+                <button onclick="toggleLanguage()" id="lang-btn-mobile" class="sm:hidden px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                    🇩🇪 DE
+                </button>
             </div>
-            <nav class="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto justify-center">
-                <button onclick="switchTab('feed')" id="tab-btn-feed" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition">
-                    🍖 Fütterung
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+                <nav class="flex flex-wrap items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto justify-center">
+                    <button onclick="switchTab('feed')" id="tab-btn-feed" class="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition"></button>
+                    <button onclick="switchTab('vomit')" id="tab-btn-vomit" class="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"></button>
+                    <button onclick="switchTab('history')" id="tab-btn-history" class="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"></button>
+                    <button onclick="switchTab('stats')" id="tab-btn-stats" class="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"></button>
+                    <button onclick="switchTab('stammdaten')" id="tab-btn-stammdaten" class="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"></button>
+                </nav>
+                <!-- Sprachumschalter (Desktop) -->
+                <button onclick="toggleLanguage()" id="lang-btn-desktop" class="hidden sm:inline-flex px-3 py-2 rounded-xl text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition shrink-0">
+                    🇩🇪 DE
                 </button>
-                <button onclick="switchTab('vomit')" id="tab-btn-vomit" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                    🤮 Spuck-Tracker
-                </button>
-                <button onclick="switchTab('history')" id="tab-btn-history" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                    📋 Historie
-                </button>
-                <button onclick="switchTab('stats')" id="tab-btn-stats" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                    📊 Auswertung
-                </button>
-                <button onclick="switchTab('stammdaten')" id="tab-btn-stammdaten" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                    ⚙️ Stammdaten
-                </button>
-            </nav>
+            </div>
         </div>
     </header>
 
@@ -58,93 +60,66 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                        <span>🥣</span> Neue Mahlzeit eintragen
+                        <span>🥣</span> <span id="i18n-new-meal-title"></span>
                     </h2>
-                    <span id="feed-toast" class="hidden text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700 px-3 py-1 rounded-full">
-                        ✅ Gespeichert!
-                    </span>
+                    <span id="feed-toast" class="hidden text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700 px-3 py-1 rounded-full"></span>
                 </div>
 
                 <form id="feeding-form" onsubmit="submitFeeding(event)" class="space-y-5">
                     <!-- Katzen-Auswahl -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">Katzen auswählen</label>
-                            <button type="button" onclick="selectAllCats()" class="text-xs text-blue-400 hover:text-blue-300 font-medium">
-                                Alle an-/abwählen
-                            </button>
+                            <label id="i18n-select-cats" class="text-xs font-medium text-slate-400 uppercase tracking-wider"></label>
+                            <button type="button" onclick="selectAllCats()" id="i18n-toggle-all-cats" class="text-xs text-blue-400 hover:text-blue-300 font-medium"></button>
                         </div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="cat-buttons">
-                            <button type="button" onclick="toggleCat('Simsa')" id="cat-btn-Simsa" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
-                                <span>🐱</span> Simsa
-                            </button>
-                            <button type="button" onclick="toggleCat('BamBam')" id="cat-btn-BamBam" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
-                                <span>🐱</span> BamBam
-                            </button>
-                            <button type="button" onclick="toggleCat('LaBim')" id="cat-btn-LaBim" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
-                                <span>🐱</span> LaBim
-                            </button>
-                            <button type="button" onclick="toggleCat('Pebbles')" id="cat-btn-Pebbles" class="cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm flex items-center justify-center gap-2">
-                                <span>🐱</span> Pebbles
-                            </button>
+                            <!-- Dynamisch gefüllt -->
                         </div>
                     </div>
 
                     <!-- Kaskaden-Dropdown: Hersteller & Futter -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Hersteller</label>
-                            <select id="manufacturer-select" onchange="onManufacturerChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
-                                <!-- Dynamisch gefüllt -->
-                            </select>
+                            <label id="i18n-label-manufacturer" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
+                            <select id="manufacturer-select" onchange="onManufacturerChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Futtersorte</label>
-                            <select id="food-select" onchange="onFoodChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
-                                <!-- Dynamisch gefüllt -->
-                            </select>
+                            <label id="i18n-label-food" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
+                            <select id="food-select" onchange="onFoodChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
                         </div>
                     </div>
 
                     <!-- Individuelle Bewertungen pro ausgewählter Katze -->
                     <div id="cat-ratings-container" class="space-y-3 bg-slate-950 border border-slate-800 p-4 rounded-xl">
-                        <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider">Individuelle Bewertung pro Katze</label>
-                        <div id="cat-ratings-list" class="space-y-3">
-                            <!-- Wird dynamisch gefüllt -->
-                        </div>
+                        <label id="i18n-label-cat-ratings" class="block text-xs font-medium text-slate-400 uppercase tracking-wider"></label>
+                        <div id="cat-ratings-list" class="space-y-2.5"></div>
                     </div>
 
                     <!-- Zeitpunkt & Notiz -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Zeitpunkt</label>
+                            <label id="i18n-label-timestamp" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
                             <input type="datetime-local" id="feeding-timestamp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Notiz (optional)</label>
-                            <input type="text" id="feeding-notes" placeholder="z.B. mit etwas Warmwasser..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                            <label id="i18n-label-notes" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
+                            <input type="text" id="feeding-notes" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
                         </div>
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md">
-                            💾 Mahlzeit eintragen
-                        </button>
+                        <button type="submit" id="i18n-btn-save-meal" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md"></button>
                     </div>
                 </form>
             </div>
 
-            <!-- Kurze Vorschau der letzten 5 Einträge -->
+            <!-- Kurze Vorschau der letzten 5 Fütterungsrunden -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-slate-300">Zuletzt eingetragen</h3>
-                    <button onclick="switchTab('history')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">
-                        Alle in der Historie ansehen &rarr;
-                    </button>
+                    <h3 id="i18n-recent-preview-title" class="text-sm font-semibold text-slate-300"></h3>
+                    <button onclick="switchTab('history')" id="i18n-link-all-history" class="text-xs text-blue-400 hover:text-blue-300 font-medium"></button>
                 </div>
-                <div id="recent-feedings-preview" class="space-y-2">
-                    <!-- Dynamisch gefüllt -->
-                </div>
+                <div id="recent-feedings-preview" class="space-y-2.5"></div>
             </div>
         </section>
 
@@ -155,82 +130,76 @@
         <section id="tab-vomit" class="hidden space-y-8">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
                 <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
-                    <span>🚨</span> Spuck-Ereignis dokumentieren
+                    <span>🚨</span> <span id="i18n-vomit-title"></span>
                 </h2>
 
                 <form id="vomit-form" onsubmit="submitVomit(event)" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Welche Katze?</label>
-                            <select id="vomit-cat" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500">
-                                <option value="Simsa">Simsa</option>
-                                <option value="BamBam">BamBam</option>
-                                <option value="LaBim">LaBim</option>
-                                <option value="Pebbles">Pebbles</option>
-                                <option value="Unbekannt">❓ Unbekannt (Fundstück)</option>
-                            </select>
+                            <label id="i18n-vomit-which-cat" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
+                            <select id="vomit-cat" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Zeitpunkt</label>
+                            <label id="i18n-vomit-timestamp-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
                             <input type="datetime-local" id="vomit-timestamp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Foto (optional)</label>
+                            <label id="i18n-vomit-photo-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
                             <input type="file" id="vomit-image" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Details / Aussehen</label>
-                            <input type="text" id="vomit-notes" placeholder="z.B. Haarballen, unverdautes Futter, klarer Schaum..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500">
+                            <label id="i18n-vomit-notes-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
+                            <input type="text" id="vomit-notes" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500">
                         </div>
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md">
-                            🚨 Spuck-Eintrag speichern
-                        </button>
+                        <button type="submit" id="i18n-btn-save-vomit" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-md"></button>
                     </div>
                 </form>
             </div>
 
             <!-- Spuck-Historie inkl. 12h-Korrelation -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
-                <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
-                    <span>🔍</span> Spuck-Historie & 12h-Futter-Korrelation
-                </h2>
-                <div id="vomits-list" class="space-y-4">
-                    <!-- Dynamisch gefüllt -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <span>🔍</span> <span id="i18n-vomit-history-title"></span>
+                    </h2>
+                    <label class="inline-flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                        <input type="checkbox" id="hide-deleted-vomit" onchange="toggleHideDeletedCats(this.checked)" class="rounded bg-slate-950 border-slate-700 text-blue-600 focus:ring-0">
+                        <span class="i18n-hide-deleted-label"></span>
+                    </label>
                 </div>
+                <div id="vomits-list" class="space-y-4"></div>
             </div>
         </section>
 
 
         <!-- ========================================== -->
-        <!-- TAB 3: HISTORIE (FÜTTERUNGEN)              -->
+        <!-- TAB 3: HISTORIE (GRUPPIERTE FÜTTERUNGEN)   -->
         <!-- ========================================== -->
         <section id="tab-history" class="hidden space-y-6">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
-                    <div>
-                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                            <span>📋</span> Komplette Fütterungs-Historie
-                        </h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Filtere nach Katze oder bearbeite vergangene Mahlzeiten.</p>
+                <div class="flex flex-col gap-3 mb-5 pb-4 border-b border-slate-800">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                                <span>📋</span> <span id="i18n-history-title"></span>
+                            </h2>
+                            <p id="i18n-history-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
+                        </div>
+                        <label class="inline-flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                            <input type="checkbox" id="hide-deleted-history" onchange="toggleHideDeletedCats(this.checked)" class="rounded bg-slate-950 border-slate-700 text-blue-600 focus:ring-0">
+                            <span class="i18n-hide-deleted-label"></span>
+                        </label>
                     </div>
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="filter-buttons">
-                        <button onclick="setCatFilter('Alle')" id="filter-Alle" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white">Alle</button>
-                        <button onclick="setCatFilter('Simsa')" id="filter-Simsa" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Simsa</button>
-                        <button onclick="setCatFilter('BamBam')" id="filter-BamBam" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">BamBam</button>
-                        <button onclick="setCatFilter('LaBim')" id="filter-LaBim" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">LaBim</button>
-                        <button onclick="setCatFilter('Pebbles')" id="filter-Pebbles" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Pebbles</button>
-                    </div>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="history-filter-buttons"></div>
                 </div>
 
-                <div id="feedings-list" class="space-y-2.5">
-                    <!-- Dynamisch gefüllt -->
-                </div>
+                <div id="feedings-list" class="space-y-3"></div>
             </div>
         </section>
 
@@ -239,125 +208,197 @@
         <!-- TAB 4: AUSWERTUNG & STATISTIK              -->
         <!-- ========================================== -->
         <section id="tab-stats" class="hidden space-y-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="stats-kpi-cards">
-                <!-- Dynamisch gefüllt -->
-            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="stats-kpi-cards"></div>
 
             <!-- Futter-Ranking -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
-                    <div>
-                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                            <span>🏆</span> Futter-Beliebtheit & Akzeptanz
-                        </h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Welche Sorten werden am liebsten gefressen?</p>
+                <div class="flex flex-col gap-3 mb-5 pb-4 border-b border-slate-800">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                                <span>🏆</span> <span id="i18n-stats-ranking-title"></span>
+                            </h2>
+                            <p id="i18n-stats-ranking-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
+                        </div>
+                        <label class="inline-flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                            <input type="checkbox" id="hide-deleted-stats" onchange="toggleHideDeletedCats(this.checked)" class="rounded bg-slate-950 border-slate-700 text-blue-600 focus:ring-0">
+                            <span class="i18n-hide-deleted-label"></span>
+                        </label>
                     </div>
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                        <button onclick="setStatsCatFilter('Alle')" id="stats-filter-Alle" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white">Alle Katzen</button>
-                        <button onclick="setStatsCatFilter('Simsa')" id="stats-filter-Simsa" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Simsa</button>
-                        <button onclick="setStatsCatFilter('BamBam')" id="stats-filter-BamBam" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">BamBam</button>
-                        <button onclick="setStatsCatFilter('LaBim')" id="stats-filter-LaBim" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">LaBim</button>
-                        <button onclick="setStatsCatFilter('Pebbles')" id="stats-filter-Pebbles" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white">Pebbles</button>
-                    </div>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="stats-filter-buttons"></div>
                 </div>
 
-                <div id="stats-food-ranking" class="space-y-3">
-                    <!-- Dynamisch gefüllt -->
-                </div>
+                <div id="stats-food-ranking" class="space-y-3"></div>
             </div>
 
             <!-- Spuck-Korrelation -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
                 <div class="mb-4 pb-3 border-b border-slate-800">
                     <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                        <span>⚠️</span> Unverträglichkeits-Radar (12h vor Spuck-Ereignis)
+                        <span>⚠️</span> <span id="i18n-stats-radar-title"></span>
                     </h2>
-                    <p class="text-xs text-slate-400 mt-0.5">
-                        Zeigt an, welches Futter wie oft in den 12 Stunden vor einem Spuck-Ereignis gefüttert wurde.
-                    </p>
+                    <p id="i18n-stats-radar-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
                 </div>
-                <div id="stats-vomit-triggers" class="space-y-2.5">
-                    <!-- Dynamisch gefüllt -->
-                </div>
+                <div id="stats-vomit-triggers" class="space-y-2.5"></div>
             </div>
         </section>
 
 
         <!-- ========================================== -->
-        <!-- TAB 5: STAMMDATEN                          -->
+        <!-- TAB 5: STAMMDATEN (KATZEN, BEGRIFFE, FUTTER)-->
         <!-- ========================================== -->
         <section id="tab-stammdaten" class="hidden space-y-6">
+
+            <!-- BEREICH 1: KATZEN VERWALTEN -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                            <span>🐱</span> <span id="i18n-stamm-cats-title"></span>
+                        </h2>
+                        <p id="i18n-stamm-cats-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
+                    </div>
+                    <button onclick="promptNewCat()" id="i18n-btn-add-cat" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shrink-0"></button>
+                </div>
+                <div id="stammdaten-cats-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+            </div>
+
+            <!-- BEREICH 2: BEWERTUNGS-BEGRIFFE EDITIEREN -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="mb-4 pb-3 border-b border-slate-800">
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <span>🏷️</span> <span id="i18n-stamm-ratings-title"></span>
+                    </h2>
+                    <p id="i18n-stamm-ratings-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
+                </div>
+                <form onsubmit="saveRatingLabels(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-emerald-400 mb-1">😍 Score 3 (Top)</label>
+                        <input type="text" id="setting-rating-3" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-blue-400 mb-1">😐 Score 2 (Standard)</label>
+                        <input type="text" id="setting-rating-2" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-rose-400 mb-1">🤢 Score 1 (Flop)</label>
+                        <input type="text" id="setting-rating-1" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-rose-500 focus:outline-none">
+                    </div>
+                    <div class="sm:col-span-3 flex items-center justify-end gap-3">
+                        <span id="ratings-saved-toast" class="hidden text-xs text-emerald-400 font-semibold">✅</span>
+                        <button type="submit" id="i18n-btn-save-ratings" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition"></button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- BEREICH 3: HERSTELLER & FUTTERSORTEN -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
                     <div>
                         <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                            <span>⚙️</span> Hersteller & Futtersorten verwalten
+                            <span>⚙️</span> <span id="i18n-stamm-food-title"></span>
                         </h2>
-                        <p class="text-xs text-slate-400 mt-1">
-                            Hier kannst du Einträge umbenennen oder löschen. Beim Umbenennen wird die bisherige Historie automatisch aktualisiert.
-                        </p>
+                        <p id="i18n-stamm-food-subtitle" class="text-xs text-slate-400 mt-1"></p>
                     </div>
-                    <button onclick="promptNewManufacturerFromStammdaten()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shrink-0">
-                        + Neuer Hersteller
-                    </button>
+                    <button onclick="promptNewManufacturerFromStammdaten()" id="i18n-btn-add-manufacturer" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shrink-0"></button>
                 </div>
 
-                <div id="stammdaten-list" class="space-y-4">
-                    <!-- Dynamisch gefüllt -->
-                </div>
+                <div id="stammdaten-list" class="space-y-4"></div>
             </div>
         </section>
 
     </main>
 
+
     <!-- ========================================== -->
-    <!-- MODAL: FÜTTERUNG BEARBEITEN                -->
+    <!-- MODAL 1: ERST-SETUP (SPRACHE & KATZEN)     -->
     <!-- ========================================== -->
-    <div id="edit-modal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+    <div id="setup-modal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center gap-2.5 border-b border-slate-800 pb-3">
+                <span class="text-2xl">🐾</span>
+                <div>
+                    <h2 id="setup-title" class="text-lg font-bold text-white">Willkommen bei Futter!</h2>
+                    <p id="setup-subtitle" class="text-xs text-slate-400">Bitte wähle deine Sprache und lege deine Katzen an.</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label id="setup-lang-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Sprache / Language</label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button type="button" onclick="setSetupLang('de')" id="setup-lang-de" class="py-2.5 px-3 rounded-xl border border-blue-500 bg-blue-950/70 text-blue-200 font-semibold text-sm">
+                            🇩🇪 Deutsch
+                        </button>
+                        <button type="button" onclick="setSetupLang('en')" id="setup-lang-en" class="py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm">
+                            🇬🇧 English
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label id="setup-cats-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Welche Katzen möchtest du verwalten?</label>
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="setup-cat-input" placeholder="Name der Katze (z.B. Simsa)..." onkeydown="if(event.key==='Enter'){event.preventDefault();addSetupCat();}" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                        <button type="button" onclick="addSetupCat()" id="setup-add-cat-btn" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+                            + Hinzufügen
+                        </button>
+                    </div>
+                    <div id="setup-cats-chips" class="flex flex-wrap gap-2 min-h-[36px] bg-slate-950 border border-slate-800/80 rounded-xl p-2.5"></div>
+                </div>
+
+                <button type="button" onclick="finishInitialSetup()" id="setup-finish-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md">
+                    🚀 Starten
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: GRUPPEN-FÜTTERUNG BEARBEITEN      -->
+    <!-- ========================================== -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl my-8">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-base font-semibold text-white">✏️ Fütterung bearbeiten</h3>
+                <h3 id="i18n-edit-modal-title" class="text-base font-semibold text-white"></h3>
                 <button onclick="closeEditModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
             </div>
 
             <form id="edit-feeding-form" onsubmit="submitEditFeeding(event)" class="space-y-4">
-                <input type="hidden" id="edit-id">
+                <input type="hidden" id="edit-batch-id">
+
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Katze</label>
-                    <select id="edit-cat" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                        <option value="Simsa">Simsa</option>
-                        <option value="BamBam">BamBam</option>
-                        <option value="LaBim">LaBim</option>
-                        <option value="Pebbles">Pebbles</option>
-                    </select>
+                    <label id="i18n-edit-cats-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
+                    <div id="edit-cat-buttons" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3"></div>
+                    <div id="edit-cat-ratings-list" class="space-y-2 bg-slate-950 border border-slate-800 p-3 rounded-xl"></div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Hersteller</label>
-                    <select id="edit-manufacturer" onchange="populateEditFoods()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></select>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label id="i18n-edit-man-label" class="block text-xs font-medium text-slate-400 mb-1"></label>
+                        <select id="edit-manufacturer" onchange="populateEditFoods()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></select>
+                    </div>
+                    <div>
+                        <label id="i18n-edit-food-label" class="block text-xs font-medium text-slate-400 mb-1"></label>
+                        <select id="edit-food" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></select>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Futtersorte</label>
-                    <select id="edit-food" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></select>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label id="i18n-edit-time-label" class="block text-xs font-medium text-slate-400 mb-1"></label>
+                        <input type="datetime-local" id="edit-timestamp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label id="i18n-edit-notes-label" class="block text-xs font-medium text-slate-400 mb-1"></label>
+                        <input type="text" id="edit-notes" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Bewertung</label>
-                    <select id="edit-rating" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                        <option value="3">😍 Weggeatmet</option>
-                        <option value="2">😐 Okay</option>
-                        <option value="1">🤢 Verweigert</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Zeitpunkt</label>
-                    <input type="datetime-local" id="edit-timestamp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Notiz</label>
-                    <input type="text" id="edit-notes" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                </div>
+
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500">Speichern</button>
+                    <button type="button" onclick="closeEditModal()" id="i18n-edit-cancel-btn" class="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700"></button>
+                    <button type="submit" id="i18n-edit-save-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500"></button>
                 </div>
             </form>
         </div>
@@ -368,23 +409,220 @@
     <!-- JAVASCRIPT LOGIK                           -->
     <!-- ========================================== -->
     <script>
+        let settings = {
+            language: 'de',
+            rating_3: 'Weggeatmet',
+            rating_2: 'Okay',
+            rating_1: 'Verweigert',
+            setup_completed: '1'
+        };
+
+        const I18N = {
+            de: {
+                tabFeed: "🍖 Fütterung",
+                tabVomit: "🤮 Spuck-Tracker",
+                tabHistory: "📋 Historie",
+                tabStats: "📊 Auswertung",
+                tabStammdaten: "⚙️ Stammdaten",
+                newMealTitle: "Neue Mahlzeit eintragen",
+                savedToast: "✅ Gespeichert!",
+                selectCats: "Katzen auswählen",
+                toggleAllCats: "Alle an-/abwählen",
+                noCatsHint: "Noch keine Katzen angelegt. Bitte unter '⚙️ Stammdaten' anlegen.",
+                noCatSelected: "Keine Katze ausgewählt.",
+                manufacturer: "Hersteller",
+                food: "Futtersorte",
+                catRatingsLabel: "Individuelle Bewertung pro Katze",
+                timestamp: "Zeitpunkt",
+                notes: "Notiz (optional)",
+                notesPlaceholder: "z.B. mit etwas Warmwasser...",
+                saveMealBtn: "💾 Mahlzeit eintragen",
+                recentPreviewTitle: "Zuletzt eingetragene Fütterungen",
+                linkAllHistory: "Alle in der Historie ansehen →",
+                noMealsYet: "Noch keine Mahlzeiten eingetragen.",
+                vomitTitle: "Spuck-Ereignis dokumentieren",
+                whichCat: "Welche Katze?",
+                unknownCat: "❓ Unbekannt (Fundstück)",
+                photoOptional: "Foto (optional)",
+                vomitNotes: "Details / Aussehen",
+                vomitNotesPlaceholder: "z.B. Haarballen, unverdautes Futter, klarer Schaum...",
+                saveVomitBtn: "🚨 Spuck-Eintrag speichern",
+                vomitHistoryTitle: "Spuck-Historie & 12h-Futter-Korrelation",
+                noVomitsYet: "Keine Spuck-Ereignisse dokumentiert.",
+                feedings12hBefore: "⚠️ Fütterungen in den 12h zuvor:",
+                noFeedings12hBefore: "ℹ️ Keine Fütterung in den 12 Stunden zuvor dokumentiert.",
+                historyTitle: "Komplette Fütterungs-Historie",
+                historySubtitle: "Gruppiert nach Mahlzeit. Filtere nach Katze oder bearbeite eine Fütterungsrunde.",
+                hideDeletedCats: "Gelöschte Katzen ausblenden",
+                allFilter: "Alle",
+                noHistoryFound: "Keine Fütterungen für diesen Filter gefunden.",
+                catSingular: "Katze",
+                catPlural: "Katzen",
+                kpiMeals: "Erfasste Katzen-Mahlzeiten",
+                kpiAvg: "Ø Akzeptanz (1 bis 3)",
+                kpiVomits: "Spuck-Ereignisse",
+                statsRankingTitle: "Futter-Beliebtheit & Akzeptanz",
+                statsRankingSubtitle: "Welche Sorten werden am liebsten gefressen?",
+                statsRadarTitle: "Unverträglichkeits-Radar (12h vor Spuck-Ereignis)",
+                statsRadarSubtitle: "Zeigt an, welches Futter wie oft in den 12 Stunden vor einem Spuck-Ereignis gefüttert wurde.",
+                noVomitTriggers: "Bisher wurden keine Futtersorten in den 12 Stunden vor einem Spuck-Ereignis gefunden.",
+                fedBeforeVomit: "x vor Spucken gefüttert",
+                stammCatsTitle: "Katzen verwalten",
+                stammCatsSubtitle: "Beim Umbenennen wird die Historie aktualisiert. Beim Löschen bleibt die Historie erhalten (kann ausgeblendet werden).",
+                btnAddCat: "+ Neue Katze",
+                stammRatingsTitle: "Bewertungs-Begriffe anpassen",
+                stammRatingsSubtitle: "Lege fest, wie die drei Bewertungsstufen in der App heißen sollen.",
+                btnSaveRatings: "💾 Begriffe speichern",
+                stammFoodTitle: "Hersteller & Futtersorten verwalten",
+                stammFoodSubtitle: "Beim Umbenennen wird die bisherige Historie automatisch aktualisiert.",
+                btnAddManufacturer: "+ Neuer Hersteller",
+                btnAddFood: "+ Sorte",
+                btnRename: "✏️ Umbenennen",
+                btnDelete: "🗑️",
+                varietiesCount: "Sorten",
+                noFoodsForMan: "Keine Futtersorten für diesen Hersteller hinterlegt.",
+                addNewManufacturerOpt: "➕ Neuen Hersteller hinzufügen...",
+                addNewFoodOpt: "➕ Neues Futter hinzufügen...",
+                promptNewManufacturer: "Name des neuen Herstellers:",
+                promptNewFood: "Name der neuen Futtersorte:",
+                promptRenameManufacturer: "Hersteller umbenennen:",
+                promptRenameFood: "Futtersorte umbenennen:",
+                promptNewCat: "Name der neuen Katze:",
+                promptRenameCat: "Katze umbenennen (Historie wird automatisch aktualisiert):",
+                confirmDeleteCat: "Katze wirklich aus der aktiven Auswahl löschen?\n\n(Bisherige Einträge in der Historie bleiben erhalten und können dort per Checkbox ausgeblendet werden).",
+                confirmDeleteBatch: "Diese komplette Fütterungsrunde wirklich löschen?",
+                confirmDeleteVomit: "Diesen Spuck-Eintrag inklusive Foto wirklich löschen?",
+                confirmDeleteMan: "Hersteller inklusive ALLER zugehörigen Futtersorten wirklich löschen?",
+                confirmDeleteFood: "Futtersorte wirklich aus der Auswahl löschen?",
+                alertSelectCat: "Bitte wähle mindestens eine Katze aus!",
+                alertSelectFood: "Bitte Hersteller und Futtersorte auswählen!",
+                editModalTitle: "✏️ Fütterungsrunde bearbeiten",
+                editCatsLabel: "Beteiligte Katzen & Bewertung",
+                editCancelBtn: "Abbrechen",
+                editSaveBtn: "Speichern"
+            },
+            en: {
+                tabFeed: "🍖 Feeding",
+                tabVomit: "🤮 Vomit Tracker",
+                tabHistory: "📋 History",
+                tabStats: "📊 Analytics",
+                tabStammdaten: "⚙️ Master Data",
+                newMealTitle: "Log New Meal",
+                savedToast: "✅ Saved!",
+                selectCats: "Select Cats",
+                toggleAllCats: "Select / Deselect All",
+                noCatsHint: "No cats created yet. Please add them under '⚙️ Master Data'.",
+                noCatSelected: "No cat selected.",
+                manufacturer: "Brand / Manufacturer",
+                food: "Food Variety",
+                catRatingsLabel: "Individual Rating per Cat",
+                timestamp: "Timestamp",
+                notes: "Notes (optional)",
+                notesPlaceholder: "e.g. mixed with warm water...",
+                saveMealBtn: "💾 Save Meal",
+                recentPreviewTitle: "Recently Logged Feedings",
+                linkAllHistory: "View all in History →",
+                noMealsYet: "No meals logged yet.",
+                vomitTitle: "Log Vomit Incident",
+                whichCat: "Which Cat?",
+                unknownCat: "❓ Unknown",
+                photoOptional: "Photo (optional)",
+                vomitNotes: "Details / Appearance",
+                vomitNotesPlaceholder: "e.g. hairball, undigested food, clear foam...",
+                saveVomitBtn: "🚨 Save Vomit Entry",
+                vomitHistoryTitle: "Vomit History & 12h Food Correlation",
+                noVomitsYet: "No vomit incidents documented.",
+                feedings12hBefore: "⚠️ Feedings in the 12h prior:",
+                noFeedings12hBefore: "ℹ️ No feeding documented in the 12 hours prior.",
+                historyTitle: "Complete Feeding History",
+                historySubtitle: "Grouped by meal session. Filter by cat or edit an entire feeding group.",
+                hideDeletedCats: "Hide deleted cats",
+                allFilter: "All",
+                noHistoryFound: "No feedings found for this filter.",
+                catSingular: "cat",
+                catPlural: "cats",
+                kpiMeals: "Recorded Cat Meals",
+                kpiAvg: "Avg. Acceptance (1 to 3)",
+                kpiVomits: "Vomit Incidents",
+                statsRankingTitle: "Food Popularity & Acceptance",
+                statsRankingSubtitle: "Which varieties are enjoyed the most?",
+                statsRadarTitle: "Intolerance Radar (12h prior to vomiting)",
+                statsRadarSubtitle: "Shows which food was fed how often within 12 hours before a vomit incident.",
+                noVomitTriggers: "No food varieties found within 12 hours before a vomit incident yet.",
+                fedBeforeVomit: "x fed prior to vomiting",
+                stammCatsTitle: "Manage Cats",
+                stammCatsSubtitle: "Renaming updates all history records. Deleting keeps history records (can be hidden via toggle).",
+                btnAddCat: "+ Add Cat",
+                stammRatingsTitle: "Customize Rating Labels",
+                stammRatingsSubtitle: "Define the custom names for the three acceptance levels.",
+                btnSaveRatings: "💾 Save Labels",
+                stammFoodTitle: "Manage Brands & Food Varieties",
+                stammFoodSubtitle: "Renaming automatically updates existing history records.",
+                btnAddManufacturer: "+ New Brand",
+                btnAddFood: "+ Variety",
+                btnRename: "✏️ Rename",
+                btnDelete: "🗑️",
+                varietiesCount: "varieties",
+                noFoodsForMan: "No food varieties listed for this brand.",
+                addNewManufacturerOpt: "➕ Add new brand...",
+                addNewFoodOpt: "➕ Add new variety...",
+                promptNewManufacturer: "Name of new brand:",
+                promptNewFood: "Name of new food variety:",
+                promptRenameManufacturer: "Rename brand:",
+                promptRenameFood: "Rename food variety:",
+                promptNewCat: "Name of the new cat:",
+                promptRenameCat: "Rename cat (history will be updated automatically):",
+                confirmDeleteCat: "Remove this cat from active selection?\n\n(Past history entries remain intact and can be hidden via the checkbox).",
+                confirmDeleteBatch: "Really delete this entire feeding group?",
+                confirmDeleteVomit: "Really delete this vomit entry including photo?",
+                confirmDeleteMan: "Really delete this brand and ALL its food varieties?",
+                confirmDeleteFood: "Really delete this food variety?",
+                alertSelectCat: "Please select at least one cat!",
+                alertSelectFood: "Please select a brand and food variety!",
+                editModalTitle: "✏️ Edit Feeding Group",
+                editCatsLabel: "Involved Cats & Ratings",
+                editCancelBtn: "Cancel",
+                editSaveBtn: "Save"
+            }
+        };
+
+        let cats = [];
         let manufacturers = [];
         let foods = [];
         let allFeedings = [];
         let vomits = [];
 
-        let selectedCats = new Set(['Simsa', 'BamBam', 'LaBim', 'Pebbles']);
-        let catRatingsState = { 'Simsa': 2, 'BamBam': 2, 'LaBim': 2, 'Pebbles': 2 };
+        let selectedCats = new Set();
+        let catRatingsState = {};
         let currentCatFilter = 'Alle';
         let statsCatFilter = 'Alle';
+        let hideDeletedCats = localStorage.getItem('hideDeletedCats') === 'true';
         let lastValidManufacturerId = null;
         let lastValidFoodId = null;
 
-        const ratingBadges = {
-            3: '<span class="px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800/60 text-xs">😍 Weggeatmet</span>',
-            2: '<span class="px-2 py-0.5 rounded-md bg-amber-950 text-amber-300 border border-amber-800/60 text-xs">😐 Okay</span>',
-            1: '<span class="px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800/60 text-xs">🤢 Verweigert</span>'
-        };
+        // Für Erst-Setup Modal
+        let setupLang = 'de';
+        let setupCatsList = ['Simsa', 'BamBam', 'LaBim', 'Pebbles'];
+
+        // Für Edit-Modal (Gruppen-Fütterung)
+        let editSelectedCats = new Set();
+        let editCatRatingsState = {};
+        let editAllKnownCats = [];
+
+        function t(key) {
+            const lang = settings.language === 'en' ? 'en' : 'de';
+            return I18N[lang][key] || I18N['de'][key] || key;
+        }
+
+        function getRatingBadge(rating) {
+            if (rating === 3) {
+                return `<span class="px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800/60 text-xs">😍 ${settings.rating_3}</span>`;
+            }
+            if (rating === 2) {
+                return `<span class="px-2 py-0.5 rounded-md bg-blue-950 text-blue-200 border border-blue-800/60 text-xs">😐 ${settings.rating_2}</span>`;
+            }
+            return `<span class="px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800/60 text-xs">🤢 ${settings.rating_1}</span>`;
+        }
 
         function getLocalDatetimeString() {
             const now = new Date();
@@ -396,60 +634,301 @@
             if (!isoStr) return '';
             const d = new Date(isoStr);
             if (isNaN(d)) return isoStr;
-            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
-                   d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+            const locale = settings.language === 'en' ? 'en-GB' : 'de-DE';
+            const suffix = settings.language === 'en' ? '' : ' Uhr';
+            return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                   d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) + suffix;
         }
 
+        // --- SPRACHE & UI-TEXTE ANWENDEN ---
+        function applyTranslations() {
+            const langLabel = settings.language === 'en' ? '🇬🇧 EN' : '🇩🇪 DE';
+            document.getElementById('lang-btn-mobile').textContent = langLabel;
+            document.getElementById('lang-btn-desktop').textContent = langLabel;
+
+            document.getElementById('tab-btn-feed').textContent = t('tabFeed');
+            document.getElementById('tab-btn-vomit').textContent = t('tabVomit');
+            document.getElementById('tab-btn-history').textContent = t('tabHistory');
+            document.getElementById('tab-btn-stats').textContent = t('tabStats');
+            document.getElementById('tab-btn-stammdaten').textContent = t('tabStammdaten');
+
+            document.getElementById('i18n-new-meal-title').textContent = t('newMealTitle');
+            document.getElementById('feed-toast').textContent = t('savedToast');
+            document.getElementById('i18n-select-cats').textContent = t('selectCats');
+            document.getElementById('i18n-toggle-all-cats').textContent = t('toggleAllCats');
+            document.getElementById('i18n-label-manufacturer').textContent = t('manufacturer');
+            document.getElementById('i18n-label-food').textContent = t('food');
+            document.getElementById('i18n-label-cat-ratings').textContent = t('catRatingsLabel');
+            document.getElementById('i18n-label-timestamp').textContent = t('timestamp');
+            document.getElementById('i18n-label-notes').textContent = t('notes');
+            document.getElementById('feeding-notes').placeholder = t('notesPlaceholder');
+            document.getElementById('i18n-btn-save-meal').textContent = t('saveMealBtn');
+            document.getElementById('i18n-recent-preview-title').textContent = t('recentPreviewTitle');
+            document.getElementById('i18n-link-all-history').textContent = t('linkAllHistory');
+
+            document.getElementById('i18n-vomit-title').textContent = t('vomitTitle');
+            document.getElementById('i18n-vomit-which-cat').textContent = t('whichCat');
+            document.getElementById('i18n-vomit-timestamp-label').textContent = t('timestamp');
+            document.getElementById('i18n-vomit-photo-label').textContent = t('photoOptional');
+            document.getElementById('i18n-vomit-notes-label').textContent = t('vomitNotes');
+            document.getElementById('vomit-notes').placeholder = t('vomitNotesPlaceholder');
+            document.getElementById('i18n-btn-save-vomit').textContent = t('saveVomitBtn');
+            document.getElementById('i18n-vomit-history-title').textContent = t('vomitHistoryTitle');
+
+            document.getElementById('i18n-history-title').textContent = t('historyTitle');
+            document.getElementById('i18n-history-subtitle').textContent = t('historySubtitle');
+
+            document.getElementById('i18n-stats-ranking-title').textContent = t('statsRankingTitle');
+            document.getElementById('i18n-stats-ranking-subtitle').textContent = t('statsRankingSubtitle');
+            document.getElementById('i18n-stats-radar-title').textContent = t('statsRadarTitle');
+            document.getElementById('i18n-stats-radar-subtitle').textContent = t('statsRadarSubtitle');
+
+            document.getElementById('i18n-stamm-cats-title').textContent = t('stammCatsTitle');
+            document.getElementById('i18n-stamm-cats-subtitle').textContent = t('stammCatsSubtitle');
+            document.getElementById('i18n-btn-add-cat').textContent = t('btnAddCat');
+            document.getElementById('i18n-stamm-ratings-title').textContent = t('stammRatingsTitle');
+            document.getElementById('i18n-stamm-ratings-subtitle').textContent = t('stammRatingsSubtitle');
+            document.getElementById('i18n-btn-save-ratings').textContent = t('btnSaveRatings');
+            document.getElementById('i18n-stamm-food-title').textContent = t('stammFoodTitle');
+            document.getElementById('i18n-stamm-food-subtitle').textContent = t('stammFoodSubtitle');
+            document.getElementById('i18n-btn-add-manufacturer').textContent = t('btnAddManufacturer');
+
+            document.getElementById('i18n-edit-modal-title').textContent = t('editModalTitle');
+            document.getElementById('i18n-edit-cats-label').textContent = t('editCatsLabel');
+            document.getElementById('i18n-edit-man-label').textContent = t('manufacturer');
+            document.getElementById('i18n-edit-food-label').textContent = t('food');
+            document.getElementById('i18n-edit-time-label').textContent = t('timestamp');
+            document.getElementById('i18n-edit-notes-label').textContent = t('notes');
+            document.getElementById('i18n-edit-cancel-btn').textContent = t('editCancelBtn');
+            document.getElementById('i18n-edit-save-btn').textContent = t('editSaveBtn');
+
+            document.querySelectorAll('.i18n-hide-deleted-label').forEach(el => {
+                el.textContent = t('hideDeletedCats');
+            });
+
+            document.getElementById('setting-rating-3').value = settings.rating_3 || 'Weggeatmet';
+            document.getElementById('setting-rating-2').value = settings.rating_2 || 'Okay';
+            document.getElementById('setting-rating-1').value = settings.rating_1 || 'Verweigert';
+        }
+
+        async function toggleLanguage() {
+            const nextLang = settings.language === 'en' ? 'de' : 'en';
+            const res = await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: nextLang })
+            });
+            if (res.ok) {
+                settings = await res.json();
+                applyTranslations();
+                renderAllViews();
+            }
+        }
+
+        function toggleHideDeletedCats(val) {
+            hideDeletedCats = val;
+            localStorage.setItem('hideDeletedCats', val ? 'true' : 'false');
+            ['hide-deleted-history', 'hide-deleted-vomit', 'hide-deleted-stats'].forEach(id => {
+                const cb = document.getElementById(id);
+                if (cb) cb.checked = val;
+            });
+            renderFilterButtons();
+            renderFeedingsHistory();
+            renderVomitsList();
+            renderStats();
+        }
+
+        // --- TABS UMSCHALTEN ---
         function switchTab(tab) {
-            ['feed', 'vomit', 'history', 'stats', 'stammdaten'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                const btn = document.getElementById(`tab-btn-${t}`);
-                btn.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition";
+            ['feed', 'vomit', 'history', 'stats', 'stammdaten'].forEach(tName => {
+                document.getElementById(`tab-${tName}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-btn-${tName}`);
+                btn.className = "px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition";
             });
 
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
             const activeBtn = document.getElementById(`tab-btn-${tab}`);
-            activeBtn.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition";
+            activeBtn.className = "px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition";
 
             if (tab === 'history') renderFeedingsHistory();
-            if (tab === 'vomit') loadVomits();
+            if (tab === 'vomit') renderVomitsList();
             if (tab === 'stats') renderStats();
             if (tab === 'stammdaten') renderStammdaten();
         }
 
-        // --- KATZEN & INDIVIDUELLE BEWERTUNGEN ---
-        function updateCatButtonsUI() {
-            ['Simsa', 'BamBam', 'LaBim', 'Pebbles'].forEach(cat => {
-                const btn = document.getElementById(`cat-btn-${cat}`);
-                if (selectedCats.has(cat)) {
-                    btn.className = "cat-btn py-2.5 px-3 rounded-xl border border-blue-500 bg-blue-950/70 text-blue-200 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm";
-                } else {
-                    btn.className = "cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-400 font-medium text-sm flex items-center justify-center gap-2";
+        // --- ERST-SETUP MODAL ---
+        function setSetupLang(lang) {
+            setupLang = lang;
+            const deBtn = document.getElementById('setup-lang-de');
+            const enBtn = document.getElementById('setup-lang-en');
+            if (lang === 'de') {
+                deBtn.className = "py-2.5 px-3 rounded-xl border border-blue-500 bg-blue-950/70 text-blue-200 font-semibold text-sm";
+                enBtn.className = "py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm";
+                document.getElementById('setup-title').textContent = "Willkommen bei Futter!";
+                document.getElementById('setup-subtitle').textContent = "Bitte wähle deine Sprache und lege deine Katzen an.";
+                document.getElementById('setup-cats-label').textContent = "Welche Katzen möchtest du verwalten?";
+                document.getElementById('setup-cat-input').placeholder = "Name der Katze...";
+                document.getElementById('setup-add-cat-btn').textContent = "+ Hinzufügen";
+                document.getElementById('setup-finish-btn').textContent = "🚀 Starten";
+            } else {
+                enBtn.className = "py-2.5 px-3 rounded-xl border border-blue-500 bg-blue-950/70 text-blue-200 font-semibold text-sm";
+                deBtn.className = "py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-medium text-sm";
+                document.getElementById('setup-title').textContent = "Welcome to Futter!";
+                document.getElementById('setup-subtitle').textContent = "Please choose your language and add your cats.";
+                document.getElementById('setup-cats-label').textContent = "Which cats do you want to manage?";
+                document.getElementById('setup-cat-input').placeholder = "Cat's name...";
+                document.getElementById('setup-add-cat-btn').textContent = "+ Add";
+                document.getElementById('setup-finish-btn').textContent = "🚀 Start";
+            }
+        }
+
+        function renderSetupCatChips() {
+            const container = document.getElementById('setup-cats-chips');
+            container.innerHTML = '';
+            if (setupCatsList.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-500 italic">${setupLang === 'en' ? 'No cats added yet...' : 'Noch keine Katzen hinzugefügt...'}</span>`;
+                return;
+            }
+            setupCatsList.forEach((cName, idx) => {
+                const chip = document.createElement('span');
+                chip.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950 text-blue-200 border border-blue-700";
+                chip.innerHTML = `🐱 ${cName} <button type="button" onclick="removeSetupCat(${idx})" class="text-blue-400 hover:text-white font-bold">&times;</button>`;
+                container.appendChild(chip);
+            });
+        }
+
+        function addSetupCat() {
+            const input = document.getElementById('setup-cat-input');
+            const val = input.value.trim();
+            if (val && !setupCatsList.includes(val)) {
+                setupCatsList.push(val);
+                input.value = '';
+                renderSetupCatChips();
+            }
+        }
+
+        function removeSetupCat(idx) {
+            setupCatsList.splice(idx, 1);
+            renderSetupCatChips();
+        }
+
+        async function finishInitialSetup() {
+            if (setupCatsList.length === 0) {
+                alert(setupLang === 'en' ? "Please add at least one cat!" : "Bitte füge mindestens eine Katze hinzu!");
+                return;
+            }
+            const res = await fetch('/api/setup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: setupLang, cats: setupCatsList })
+            });
+            if (res.ok) {
+                document.getElementById('setup-modal').classList.add('hidden');
+                await loadAllData(true);
+            }
+        }
+
+        // --- DATEN VOM BACKEND LADEN ---
+        async function loadAllData(selectAllOnInit = false) {
+            const [setRes, catRes, manRes, foodRes, feedRes, vomitRes] = await Promise.all([
+                fetch('/api/settings'),
+                fetch('/api/cats'),
+                fetch('/api/manufacturers'),
+                fetch('/api/foods'),
+                fetch('/api/feedings?limit=1000'),
+                fetch('/api/vomits?limit=200')
+            ]);
+            settings = await setRes.json();
+            cats = await catRes.json();
+            manufacturers = await manRes.json();
+            foods = await foodRes.json();
+            allFeedings = await feedRes.json();
+            vomits = await vomitRes.json();
+
+            // Prüfen, ob Erst-Setup angezeigt werden soll
+            if (settings.setup_completed === '0' && cats.length === 0) {
+                renderSetupCatChips();
+                document.getElementById('setup-modal').classList.remove('hidden');
+            }
+
+            const activeCatNames = cats.map(c => c.name);
+            if (selectAllOnInit) {
+                selectedCats = new Set(activeCatNames);
+            } else {
+                // Nicht mehr existierende Katzen aus der aktiven Auswahl entfernen
+                selectedCats = new Set(Array.from(selectedCats).filter(c => activeCatNames.includes(c)));
+            }
+
+            activeCatNames.forEach(cName => {
+                if (catRatingsState[cName] === undefined) {
+                    catRatingsState[cName] = 2; // Standard: "Okay" (2)
                 }
             });
+
+            applyTranslations();
+            renderAllViews();
+        }
+
+        function renderAllViews() {
+            populateManufacturerSelect(lastValidManufacturerId);
+            populateVomitCatSelect();
+            renderCatButtons();
+            renderFilterButtons();
+            renderRecentPreview();
+            renderFeedingsHistory();
+            renderVomitsList();
+            renderStammdaten();
+            renderStats();
+        }
+
+        // --- KATZEN & INDIVIDUELLE BEWERTUNGEN (STANDARD: OKAY = BLAU) ---
+        function renderCatButtons() {
+            const container = document.getElementById('cat-buttons');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (cats.length === 0) {
+                container.innerHTML = `<p class="col-span-4 text-xs text-amber-400 italic">${t('noCatsHint')}</p>`;
+                renderCatRatingsList();
+                return;
+            }
+
+            cats.forEach(c => {
+                const isSelected = selectedCats.has(c.name);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => toggleCat(c.name);
+                btn.className = isSelected
+                    ? "cat-btn py-2.5 px-3 rounded-xl border border-blue-500 bg-blue-950/70 text-blue-200 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm"
+                    : "cat-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-400 font-medium text-sm flex items-center justify-center gap-2";
+                btn.innerHTML = `<span>🐱</span> ${c.name}`;
+                container.appendChild(btn);
+            });
+
             renderCatRatingsList();
         }
 
-        function toggleCat(cat) {
-            if (selectedCats.has(cat)) {
-                selectedCats.delete(cat);
+        function toggleCat(catName) {
+            if (selectedCats.has(catName)) {
+                selectedCats.delete(catName);
             } else {
-                selectedCats.add(cat);
+                selectedCats.add(catName);
+                if (catRatingsState[catName] === undefined) catRatingsState[catName] = 2;
             }
-            updateCatButtonsUI();
+            renderCatButtons();
         }
 
         function selectAllCats() {
-            if (selectedCats.size === 4) {
+            if (selectedCats.size === cats.length) {
                 selectedCats.clear();
             } else {
-                selectedCats = new Set(['Simsa', 'BamBam', 'LaBim', 'Pebbles']);
+                selectedCats = new Set(cats.map(c => c.name));
             }
-            updateCatButtonsUI();
+            renderCatButtons();
         }
 
-        function setCatRating(cat, val) {
-            catRatingsState[cat] = val;
+        function setCatRating(catName, val) {
+            catRatingsState[catName] = val;
             renderCatRatingsList();
         }
 
@@ -459,15 +938,17 @@
             container.innerHTML = '';
 
             if (selectedCats.size === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-500 italic">Keine Katze ausgewählt.</p>';
+                container.innerHTML = `<p class="text-xs text-slate-500 italic">${t('noCatSelected')}</p>`;
                 return;
             }
 
             selectedCats.forEach(cat => {
-                const currentVal = catRatingsState[cat] !== undefined ? catRatingsState[cat] : 3;
-                
+                const currentVal = catRatingsState[cat] !== undefined ? catRatingsState[cat] : 2;
+                const safeCat = cat.replace(/'/g, "\\'");
+
                 const s3 = currentVal === 3 ? "border-emerald-500 bg-emerald-950/80 text-emerald-300 font-semibold" : "border-slate-800 bg-slate-900 text-slate-400";
-                const s2 = currentVal === 2 ? "border-blue-500 bg-blue-950/80 text-blue-300 font-semibold" : "border-slate-800 bg-slate-900 text-slate-400";
+                // Standard "Okay" (2) in Blau
+                const s2 = currentVal === 2 ? "border-blue-500 bg-blue-950/85 text-blue-200 font-semibold" : "border-slate-800 bg-slate-900 text-slate-400";
                 const s1 = currentVal === 1 ? "border-rose-500 bg-rose-950/80 text-rose-300 font-semibold" : "border-slate-800 bg-slate-900 text-slate-400";
 
                 const row = document.createElement('div');
@@ -475,37 +956,39 @@
                 row.innerHTML = `
                     <span class="text-sm font-medium text-white flex items-center gap-2">🐱 ${cat}</span>
                     <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto">
-                        <button type="button" onclick="setCatRating('${cat}', 3)" class="py-1.5 px-2 rounded-lg border text-xs text-center transition ${s3}">😍 Weggeatmet</button>
-                        <button type="button" onclick="setCatRating('${cat}', 2)" class="py-1.5 px-2 rounded-lg border text-xs text-center transition ${s2}">😐 Okay</button>
-                        <button type="button" onclick="setCatRating('${cat}', 1)" class="py-1.5 px-2 rounded-lg border text-xs text-center transition ${s1}">🤢 Verweigert</button>
+                        <button type="button" onclick="setCatRating('${safeCat}', 3)" class="py-1.5 px-2.5 rounded-lg border text-xs text-center transition ${s3}">😍 ${settings.rating_3}</button>
+                        <button type="button" onclick="setCatRating('${safeCat}', 2)" class="py-1.5 px-2.5 rounded-lg border text-xs text-center transition ${s2}">😐 ${settings.rating_2}</button>
+                        <button type="button" onclick="setCatRating('${safeCat}', 1)" class="py-1.5 px-2.5 rounded-lg border text-xs text-center transition ${s1}">🤢 ${settings.rating_1}</button>
                     </div>
                 `;
                 container.appendChild(row);
             });
         }
 
-        // --- DATEN VOM BACKEND LADEN ---
-        async function loadAllData() {
-            const [manRes, foodRes, feedRes, vomitRes] = await Promise.all([
-                fetch('/api/manufacturers'),
-                fetch('/api/foods'),
-                fetch('/api/feedings?limit=500'),
-                fetch('/api/vomits?limit=200')
-            ]);
-            manufacturers = await manRes.json();
-            foods = await foodRes.json();
-            allFeedings = await feedRes.json();
-            vomits = await vomitRes.json();
-
-            populateManufacturerSelect(lastValidManufacturerId);
-            renderRecentPreview();
-            renderFeedingsHistory();
-            renderStammdaten();
-            renderStats();
+        // --- DROPDOWNS FÜR HERSTELLER, FUTTER & SPUCK-KATZE ---
+        function populateVomitCatSelect() {
+            const sel = document.getElementById('vomit-cat');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = '';
+            cats.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.name;
+                opt.textContent = c.name;
+                sel.appendChild(opt);
+            });
+            const unkOpt = document.createElement('option');
+            unkOpt.value = 'Unbekannt';
+            unkOpt.textContent = t('unknownCat');
+            sel.appendChild(unkOpt);
+            if (prev && Array.from(sel.options).some(o => o.value === prev)) {
+                sel.value = prev;
+            }
         }
 
         function populateManufacturerSelect(selectedId = null) {
             const sel = document.getElementById('manufacturer-select');
+            if (!sel) return;
             sel.innerHTML = '';
 
             manufacturers.forEach(m => {
@@ -517,7 +1000,7 @@
 
             const addOpt = document.createElement('option');
             addOpt.value = '__new__';
-            addOpt.textContent = '➕ Neuen Hersteller hinzufügen...';
+            addOpt.textContent = t('addNewManufacturerOpt');
             sel.appendChild(addOpt);
 
             if (selectedId && manufacturers.some(m => m.id == selectedId)) {
@@ -533,6 +1016,7 @@
         function populateFoodSelect(selectedFoodId = null) {
             const manId = parseInt(document.getElementById('manufacturer-select').value);
             const sel = document.getElementById('food-select');
+            if (!sel) return;
             sel.innerHTML = '';
 
             const filtered = foods.filter(f => f.manufacturer_id === manId);
@@ -545,7 +1029,7 @@
 
             const addOpt = document.createElement('option');
             addOpt.value = '__new__';
-            addOpt.textContent = '➕ Neues Futter hinzufügen...';
+            addOpt.textContent = t('addNewFoodOpt');
             sel.appendChild(addOpt);
 
             if (selectedFoodId && filtered.some(f => f.id == selectedFoodId)) {
@@ -560,7 +1044,7 @@
         async function onManufacturerChange() {
             const sel = document.getElementById('manufacturer-select');
             if (sel.value === '__new__') {
-                const name = prompt("Name des neuen Herstellers:");
+                const name = prompt(t('promptNewManufacturer'));
                 if (name && name.trim()) {
                     const res = await fetch('/api/manufacturers', {
                         method: 'POST',
@@ -570,7 +1054,7 @@
                     if (res.ok) {
                         const created = await res.json();
                         lastValidManufacturerId = created.id;
-                        await loadAllData();
+                        await loadAllData(false);
                         return;
                     }
                 }
@@ -586,11 +1070,8 @@
             const sel = document.getElementById('food-select');
             const manId = parseInt(document.getElementById('manufacturer-select').value);
             if (sel.value === '__new__') {
-                if (!manId || isNaN(manId)) {
-                    alert("Bitte zuerst einen gültigen Hersteller auswählen.");
-                    return;
-                }
-                const name = prompt("Name der neuen Futtersorte:");
+                if (!manId || isNaN(manId)) return;
+                const name = prompt(t('promptNewFood'));
                 if (name && name.trim()) {
                     const res = await fetch('/api/foods', {
                         method: 'POST',
@@ -600,7 +1081,7 @@
                     if (res.ok) {
                         const created = await res.json();
                         lastValidFoodId = created.id;
-                        await loadAllData();
+                        await loadAllData(false);
                         return;
                     }
                 }
@@ -614,19 +1095,19 @@
         async function submitFeeding(e) {
             e.preventDefault();
             if (selectedCats.size === 0) {
-                alert("Bitte wähle mindestens eine Katze aus!");
+                alert(t('alertSelectCat'));
                 return;
             }
             const manId = parseInt(document.getElementById('manufacturer-select').value);
             const foodId = parseInt(document.getElementById('food-select').value);
             if (!manId || !foodId || isNaN(manId) || isNaN(foodId)) {
-                alert("Bitte Hersteller und Futtersorte auswählen!");
+                alert(t('alertSelectFood'));
                 return;
             }
 
             const catRatingsPayload = {};
             selectedCats.forEach(cat => {
-                catRatingsPayload[cat] = catRatingsState[cat] !== undefined ? catRatingsState[cat] : 3;
+                catRatingsPayload[cat] = catRatingsState[cat] !== undefined ? catRatingsState[cat] : 2;
             });
 
             const payload = {
@@ -646,12 +1127,91 @@
             if (res.ok) {
                 document.getElementById('feeding-notes').value = '';
                 document.getElementById('feeding-timestamp').value = getLocalDatetimeString();
+                // Nach dem Speichern Bewertungen wieder auf Standard "Okay" (2) zurücksetzen
+                cats.forEach(c => { catRatingsState[c.name] = 2; });
                 const toast = document.getElementById('feed-toast');
                 toast.classList.remove('hidden');
                 setTimeout(() => toast.classList.add('hidden'), 2500);
-                await loadAllData();
-            } else {
-                alert("Fehler beim Speichern der Fütterung.");
+                await loadAllData(false);
+            }
+        }
+
+        // --- GRUPPIERUNGS-LOGIK FÜR FÜTTERUNGEN ---
+        function getGroupedFeedings(respectHideDeleted = true) {
+            const activeSet = new Set(cats.map(c => c.name));
+            const groupsMap = new Map();
+
+            allFeedings.forEach(f => {
+                if (respectHideDeleted && hideDeletedCats && !activeSet.has(f.cat_name)) {
+                    return;
+                }
+                const bKey = f.batch_id ? f.batch_id : `single_${f.id}`;
+                if (!groupsMap.has(bKey)) {
+                    groupsMap.set(bKey, {
+                        batch_id: bKey,
+                        manufacturer_id: f.manufacturer_id,
+                        food_id: f.food_id,
+                        manufacturer_name: f.manufacturer_name,
+                        food_name: f.food_name,
+                        timestamp: f.timestamp,
+                        notes: f.notes || '',
+                        items: []
+                    });
+                }
+                groupsMap.get(bKey).items.push({
+                    id: f.id,
+                    cat_name: f.cat_name,
+                    rating: f.rating,
+                    is_deleted_cat: !activeSet.has(f.cat_name)
+                });
+            });
+
+            return Array.from(groupsMap.values());
+        }
+
+        function renderFilterButtons() {
+            const activeSet = new Set(cats.map(c => c.name));
+            const allKnownCats = new Set(cats.map(c => c.name));
+            if (!hideDeletedCats) {
+                allFeedings.forEach(f => { if (f.cat_name) allKnownCats.add(f.cat_name); });
+            }
+            const catList = Array.from(allKnownCats);
+
+            if (currentCatFilter !== 'Alle' && !catList.includes(currentCatFilter)) currentCatFilter = 'Alle';
+            if (statsCatFilter !== 'Alle' && !catList.includes(statsCatFilter)) statsCatFilter = 'Alle';
+
+            // Historie Filter-Buttons
+            const histContainer = document.getElementById('history-filter-buttons');
+            if (histContainer) {
+                histContainer.innerHTML = '';
+                ['Alle', ...catList].forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => { currentCatFilter = c; renderFilterButtons(); renderFeedingsHistory(); };
+                    const isDeleted = c !== 'Alle' && !activeSet.has(c);
+                    const label = c === 'Alle' ? t('allFilter') : (isDeleted ? `${c} (🗑️)` : c);
+                    btn.className = (c === currentCatFilter)
+                        ? "px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white shrink-0"
+                        : "px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white shrink-0";
+                    btn.textContent = label;
+                    histContainer.appendChild(btn);
+                });
+            }
+
+            // Statistik Filter-Buttons
+            const statsContainer = document.getElementById('stats-filter-buttons');
+            if (statsContainer) {
+                statsContainer.innerHTML = '';
+                ['Alle', ...catList].forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => { statsCatFilter = c; renderFilterButtons(); renderStats(); };
+                    const isDeleted = c !== 'Alle' && !activeSet.has(c);
+                    const label = c === 'Alle' ? t('allFilter') : (isDeleted ? `${c} (🗑️)` : c);
+                    btn.className = (c === statsCatFilter)
+                        ? "px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white shrink-0"
+                        : "px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white shrink-0";
+                    btn.textContent = label;
+                    statsContainer.appendChild(btn);
+                });
             }
         }
 
@@ -660,36 +1220,35 @@
             if (!container) return;
             container.innerHTML = '';
 
-            const recent = allFeedings.slice(0, 5);
-            if (recent.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-500 italic py-2">Noch keine Mahlzeiten eingetragen.</p>';
+            const groups = getGroupedFeedings(true).slice(0, 5);
+            if (groups.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic py-2">${t('noMealsYet')}</p>`;
                 return;
             }
 
-            recent.forEach(f => {
+            groups.forEach(g => {
+                const count = g.items.length;
+                const countLabel = `${count} ${count === 1 ? t('catSingular') : t('catPlural')}`;
+                const catPills = g.items.map(it =>
+                    `<span class="inline-flex items-center gap-1 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-md text-xs">
+                        <strong class="text-blue-300">${it.cat_name}:</strong> ${getRatingBadge(it.rating)}
+                    </span>`
+                ).join('');
+
                 const div = document.createElement('div');
-                div.className = "bg-slate-950 border border-slate-800/70 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs";
+                div.className = "bg-slate-950 border border-slate-800/70 rounded-xl p-3 space-y-2 text-xs";
                 div.innerHTML = `
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="font-bold text-blue-400">${f.cat_name}</span>
-                        <span class="text-slate-200">${f.manufacturer_name} – ${f.food_name}</span>
-                        ${ratingBadges[f.rating] || ''}
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800 font-semibold">${countLabel}</span>
+                            <span class="font-semibold text-sm text-white">${g.manufacturer_name} – ${g.food_name}</span>
+                        </div>
+                        <span class="text-slate-500 shrink-0">🕒 ${formatDisplayDate(g.timestamp)}</span>
                     </div>
-                    <span class="text-slate-500 shrink-0">${formatDisplayDate(f.timestamp)}</span>
+                    <div class="flex flex-wrap gap-1.5">${catPills}</div>
                 `;
                 container.appendChild(div);
             });
-        }
-
-        function setCatFilter(cat) {
-            currentCatFilter = cat;
-            ['Alle', 'Simsa', 'BamBam', 'LaBim', 'Pebbles'].forEach(c => {
-                const btn = document.getElementById(`filter-${c}`);
-                btn.className = (c === cat)
-                    ? "px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white"
-                    : "px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white";
-            });
-            renderFeedingsHistory();
         }
 
         function renderFeedingsHistory() {
@@ -697,35 +1256,52 @@
             if (!container) return;
             container.innerHTML = '';
 
-            const filtered = currentCatFilter === 'Alle'
-                ? allFeedings
-                : allFeedings.filter(f => f.cat_name === currentCatFilter);
+            let groups = getGroupedFeedings(true);
+            if (currentCatFilter !== 'Alle') {
+                groups = groups.filter(g => g.items.some(it => it.cat_name === currentCatFilter));
+            }
 
-            if (filtered.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-500 italic py-4 text-center">Keine Fütterungen für diesen Filter gefunden.</p>';
+            if (groups.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">${t('noHistoryFound')}</p>`;
                 return;
             }
 
-            filtered.forEach(f => {
-                const row = document.createElement('div');
-                row.className = "bg-slate-950 border border-slate-800/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2";
-                row.innerHTML = `
-                    <div class="space-y-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="font-bold text-sm text-blue-400">${f.cat_name}</span>
-                            <span class="text-sm font-medium text-white">${f.manufacturer_name} – ${f.food_name}</span>
-                            ${ratingBadges[f.rating] || ''}
+            groups.forEach(g => {
+                const count = g.items.length;
+                const countLabel = `${count} ${count === 1 ? t('catSingular') : t('catPlural')}`;
+                const safeBatchId = g.batch_id.replace(/'/g, "\\'");
+
+                const catPills = g.items.map(it => {
+                    const delBadge = it.is_deleted_cat ? ' <span class="text-slate-500" title="Gelöscht">(🗑️)</span>' : '';
+                    return `
+                        <div class="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg text-xs">
+                            <span class="font-semibold text-blue-300">🐱 ${it.cat_name}${delBadge}</span>
+                            ${getRatingBadge(it.rating)}
                         </div>
-                        <div class="text-xs text-slate-400 flex flex-wrap items-center gap-3">
-                            <span>🕒 ${formatDisplayDate(f.timestamp)}</span>
-                            ${f.notes ? `<span class="text-slate-300 italic">💬 "${f.notes}"</span>` : ''}
+                    `;
+                }).join('');
+
+                const row = document.createElement('div');
+                row.className = "bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3";
+                row.innerHTML = `
+                    <div class="space-y-2 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800/80 text-xs font-bold">${countLabel}</span>
+                            <span class="text-sm sm:text-base font-semibold text-white">${g.manufacturer_name} – ${g.food_name}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${catPills}
+                        </div>
+                        <div class="text-xs text-slate-400 flex flex-wrap items-center gap-3 pt-0.5">
+                            <span>🕒 ${formatDisplayDate(g.timestamp)}</span>
+                            ${g.notes ? `<span class="text-slate-300 italic">💬 "${g.notes}"</span>` : ''}
                         </div>
                     </div>
                     <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                        <button onclick="openEditModal(${f.id})" class="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs border border-slate-800" title="Bearbeiten">
+                        <button onclick="openEditBatchModal('${safeBatchId}')" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs border border-slate-800" title="Bearbeiten">
                             ✏️
                         </button>
-                        <button onclick="deleteFeeding(${f.id})" class="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-950 text-rose-400 text-xs border border-slate-800" title="Löschen">
+                        <button onclick="deleteFeedingBatch('${safeBatchId}')" class="p-2 rounded-lg bg-slate-900 hover:bg-rose-950 text-rose-400 text-xs border border-slate-800" title="Löschen">
                             🗑️
                         </button>
                     </div>
@@ -734,22 +1310,33 @@
             });
         }
 
-        async function deleteFeeding(id) {
-            if (!confirm("Diesen Fütterungs-Eintrag wirklich löschen?")) return;
-            await fetch(`/api/feedings/${id}`, { method: 'DELETE' });
-            await loadAllData();
+        async function deleteFeedingBatch(batchId) {
+            if (!confirm(t('confirmDeleteBatch'))) return;
+            await fetch(`/api/feedings/batch/${encodeURIComponent(batchId)}`, { method: 'DELETE' });
+            await loadAllData(false);
         }
 
-        // --- MODAL: FÜTTERUNG BEARBEITEN ---
-        function openEditModal(id) {
-            const f = allFeedings.find(item => item.id === id);
-            if (!f) return;
+        // --- MODAL: GRUPPEN-FÜTTERUNG BEARBEITEN ---
+        function openEditBatchModal(batchId) {
+            // Ungefilterte Gruppe holen, damit alle beteiligten Katzen drin sind
+            const allGroups = getGroupedFeedings(false);
+            const g = allGroups.find(item => item.batch_id === batchId);
+            if (!g) return;
 
-            document.getElementById('edit-id').value = f.id;
-            document.getElementById('edit-cat').value = f.cat_name;
-            document.getElementById('edit-rating').value = f.rating;
-            document.getElementById('edit-timestamp').value = f.timestamp.slice(0, 16);
-            document.getElementById('edit-notes').value = f.notes || '';
+            document.getElementById('edit-batch-id').value = g.batch_id;
+            document.getElementById('edit-timestamp').value = g.timestamp.slice(0, 16);
+            document.getElementById('edit-notes').value = g.notes || '';
+
+            editSelectedCats = new Set();
+            editCatRatingsState = {};
+            const knownSet = new Set(cats.map(c => c.name));
+
+            g.items.forEach(it => {
+                knownSet.add(it.cat_name);
+                editSelectedCats.add(it.cat_name);
+                editCatRatingsState[it.cat_name] = it.rating;
+            });
+            editAllKnownCats = Array.from(knownSet);
 
             const manSel = document.getElementById('edit-manufacturer');
             manSel.innerHTML = '';
@@ -759,10 +1346,62 @@
                 opt.textContent = m.name;
                 manSel.appendChild(opt);
             });
-            if (f.manufacturer_id) manSel.value = f.manufacturer_id;
+            if (g.manufacturer_id) manSel.value = g.manufacturer_id;
 
-            populateEditFoods(f.food_id);
+            populateEditFoods(g.food_id);
+            renderEditModalCats();
             document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function renderEditModalCats() {
+            const btnContainer = document.getElementById('edit-cat-buttons');
+            const ratingsContainer = document.getElementById('edit-cat-ratings-list');
+            btnContainer.innerHTML = '';
+            ratingsContainer.innerHTML = '';
+
+            editAllKnownCats.forEach(cName => {
+                const isSel = editSelectedCats.has(cName);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => {
+                    if (editSelectedCats.has(cName)) editSelectedCats.delete(cName);
+                    else {
+                        editSelectedCats.add(cName);
+                        if (editCatRatingsState[cName] === undefined) editCatRatingsState[cName] = 2;
+                    }
+                    renderEditModalCats();
+                };
+                btn.className = isSel
+                    ? "py-1.5 px-2.5 rounded-xl border border-blue-500 bg-blue-950/70 text-blue-200 font-semibold text-xs flex items-center justify-center gap-1.5"
+                    : "py-1.5 px-2.5 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-400 font-medium text-xs flex items-center justify-center gap-1.5";
+                btn.innerHTML = `🐱 ${cName}`;
+                btnContainer.appendChild(btn);
+            });
+
+            editSelectedCats.forEach(cat => {
+                const currentVal = editCatRatingsState[cat] !== undefined ? editCatRatingsState[cat] : 2;
+                const safeCat = cat.replace(/'/g, "\\'");
+                const s3 = currentVal === 3 ? "border-emerald-500 bg-emerald-950/80 text-emerald-300 font-semibold" : "border-slate-800 bg-slate-900 text-slate-400";
+                const s2 = currentVal === 2 ? "border-blue-500 bg-blue-950/85 text-blue-200 font-semibold" : "border-slate-800 bg-slate-900 text-slate-400";
+                const s1 = currentVal === 1 ? "border-rose-500 bg-rose-950/80 text-rose-300 font-semibold" : "border-slate-800 bg-slate-900 text-slate-400";
+
+                const row = document.createElement('div');
+                row.className = "flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800";
+                row.innerHTML = `
+                    <span class="text-xs font-semibold text-white">🐱 ${cat}</span>
+                    <div class="grid grid-cols-3 gap-1">
+                        <button type="button" onclick="setEditCatRating('${safeCat}', 3)" class="py-1 px-2 rounded border text-xs ${s3}">😍 ${settings.rating_3}</button>
+                        <button type="button" onclick="setEditCatRating('${safeCat}', 2)" class="py-1 px-2 rounded border text-xs ${s2}">😐 ${settings.rating_2}</button>
+                        <button type="button" onclick="setEditCatRating('${safeCat}', 1)" class="py-1 px-2 rounded border text-xs ${s1}">🤢 ${settings.rating_1}</button>
+                    </div>
+                `;
+                ratingsContainer.appendChild(row);
+            });
+        }
+
+        function setEditCatRating(cat, val) {
+            editCatRatingsState[cat] = val;
+            renderEditModalCats();
         }
 
         function populateEditFoods(selectedFoodId = null) {
@@ -784,17 +1423,25 @@
 
         async function submitEditFeeding(e) {
             e.preventDefault();
-            const id = document.getElementById('edit-id').value;
+            if (editSelectedCats.size === 0) {
+                alert(t('alertSelectCat'));
+                return;
+            }
+            const batchId = document.getElementById('edit-batch-id').value;
+            const catRatingsPayload = {};
+            editSelectedCats.forEach(c => {
+                catRatingsPayload[c] = editCatRatingsState[c] !== undefined ? editCatRatingsState[c] : 2;
+            });
+
             const payload = {
-                cat_name: document.getElementById('edit-cat').value,
+                cat_ratings: catRatingsPayload,
                 manufacturer_id: parseInt(document.getElementById('edit-manufacturer').value),
                 food_id: parseInt(document.getElementById('edit-food').value),
-                rating: parseInt(document.getElementById('edit-rating').value),
                 timestamp: document.getElementById('edit-timestamp').value,
                 notes: document.getElementById('edit-notes').value.trim()
             };
 
-            const res = await fetch(`/api/feedings/${id}`, {
+            const res = await fetch(`/api/feedings/batch/${encodeURIComponent(batchId)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -802,9 +1449,7 @@
 
             if (res.ok) {
                 closeEditModal();
-                await loadAllData();
-            } else {
-                alert("Fehler beim Aktualisieren.");
+                await loadAllData(false);
             }
         }
 
@@ -830,25 +1475,26 @@
                 document.getElementById('vomit-notes').value = '';
                 fileInput.value = '';
                 document.getElementById('vomit-timestamp').value = getLocalDatetimeString();
-                await loadAllData();
-                loadVomits();
-            } else {
-                alert("Fehler beim Speichern des Spuck-Eintrags.");
+                await loadAllData(false);
             }
         }
 
-        async function loadVomits() {
-            const res = await fetch('/api/vomits');
-            vomits = await res.json();
+        function renderVomitsList() {
             const container = document.getElementById('vomits-list');
+            if (!container) return;
             container.innerHTML = '';
 
-            if (vomits.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-500 italic py-4 text-center">Keine Spuck-Ereignisse dokumentiert.</p>';
+            const activeSet = new Set(cats.map(c => c.name));
+            const filteredVomits = hideDeletedCats
+                ? vomits.filter(v => v.cat_name === 'Unbekannt' || activeSet.has(v.cat_name))
+                : vomits;
+
+            if (filteredVomits.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">${t('noVomitsYet')}</p>`;
                 return;
             }
 
-            vomits.forEach(v => {
+            filteredVomits.forEach(v => {
                 let correlationHtml = '';
                 if (v.recent_feedings && v.recent_feedings.length > 0) {
                     const items = v.recent_feedings.map(rf =>
@@ -856,25 +1502,26 @@
                     ).join('');
                     correlationHtml = `
                         <div class="mt-2.5 bg-amber-950/40 border border-amber-800/50 rounded-lg p-2.5">
-                            <p class="text-xs font-semibold text-amber-300 mb-1">⚠️ Fütterungen in den 12h zuvor:</p>
+                            <p class="text-xs font-semibold text-amber-300 mb-1">${t('feedings12hBefore')}</p>
                             <ul class="space-y-1">${items}</ul>
                         </div>
                     `;
                 } else {
                     correlationHtml = `
                         <div class="mt-2 text-xs text-slate-500 italic">
-                            ℹ️ Keine Fütterung in den 12 Stunden zuvor dokumentiert.
+                            ${t('noFeedings12hBefore')}
                         </div>
                     `;
                 }
 
+                const displayCat = v.cat_name === 'Unbekannt' ? t('unknownCat') : v.cat_name;
                 const card = document.createElement('div');
                 card.className = "bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4";
                 card.innerHTML = `
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm text-rose-400">🤮 ${v.cat_name}</span>
+                                <span class="font-bold text-sm text-rose-400">🤮 ${displayCat}</span>
                                 <span class="text-xs text-slate-400">🕒 ${formatDisplayDate(v.timestamp)}</span>
                             </div>
                             <button onclick="deleteVomit(${v.id})" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-slate-900 border border-slate-800">
@@ -895,53 +1542,52 @@
         }
 
         async function deleteVomit(id) {
-            if (!confirm("Diesen Spuck-Eintrag inklusive Foto wirklich löschen?")) return;
+            if (!confirm(t('confirmDeleteVomit'))) return;
             await fetch(`/api/vomits/${id}`, { method: 'DELETE' });
-            await loadAllData();
-            loadVomits();
+            await loadAllData(false);
         }
 
         // --- TAB 4: AUSWERTUNG & STATISTIK ---
-        function setStatsCatFilter(cat) {
-            statsCatFilter = cat;
-            ['Alle', 'Simsa', 'BamBam', 'LaBim', 'Pebbles'].forEach(c => {
-                const btn = document.getElementById(`stats-filter-${c}`);
-                btn.className = (c === cat)
-                    ? "px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white"
-                    : "px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-white";
-            });
-            renderStats();
-        }
-
         function renderStats() {
             const kpiContainer = document.getElementById('stats-kpi-cards');
             const rankingContainer = document.getElementById('stats-food-ranking');
             const triggerContainer = document.getElementById('stats-vomit-triggers');
             if (!kpiContainer || !rankingContainer || !triggerContainer) return;
 
+            const activeSet = new Set(cats.map(c => c.name));
+            let baseFeedings = hideDeletedCats
+                ? allFeedings.filter(f => activeSet.has(f.cat_name))
+                : allFeedings;
+
             const filteredFeedings = statsCatFilter === 'Alle'
-                ? allFeedings
-                : allFeedings.filter(f => f.cat_name === statsCatFilter);
+                ? baseFeedings
+                : baseFeedings.filter(f => f.cat_name === statsCatFilter);
 
             const totalMeals = filteredFeedings.length;
             const avgScore = totalMeals > 0
                 ? (filteredFeedings.reduce((acc, x) => acc + x.rating, 0) / totalMeals).toFixed(2)
                 : '–';
+
+            let baseVomits = hideDeletedCats
+                ? vomits.filter(v => v.cat_name === 'Unbekannt' || activeSet.has(v.cat_name))
+                : vomits;
             const totalVomits = statsCatFilter === 'Alle'
-                ? vomits.length
-                : vomits.filter(v => v.cat_name === statsCatFilter).length;
+                ? baseVomits.length
+                : baseVomits.filter(v => v.cat_name === statsCatFilter).length;
+
+            const filterLabel = statsCatFilter === 'Alle' ? t('allFilter') : statsCatFilter;
 
             kpiContainer.innerHTML = `
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-                    <p class="text-xs text-slate-400 uppercase">Erfasste Mahlzeiten (${statsCatFilter})</p>
+                    <p class="text-xs text-slate-400 uppercase">${t('kpiMeals')} (${filterLabel})</p>
                     <p class="text-2xl font-bold text-white mt-1">${totalMeals}</p>
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-                    <p class="text-xs text-slate-400 uppercase">Ø Akzeptanz (1 bis 3)</p>
+                    <p class="text-xs text-slate-400 uppercase">${t('kpiAvg')}</p>
                     <p class="text-2xl font-bold text-emerald-400 mt-1">${avgScore} <span class="text-xs text-slate-400 font-normal">/ 3.00</span></p>
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-                    <p class="text-xs text-slate-400 uppercase">Spuck-Ereignisse (${statsCatFilter})</p>
+                    <p class="text-xs text-slate-400 uppercase">${t('kpiVomits')} (${filterLabel})</p>
                     <p class="text-2xl font-bold text-rose-400 mt-1">${totalVomits}</p>
                 </div>
             `;
@@ -967,13 +1613,13 @@
             });
 
             if (sortedFoods.length === 0) {
-                rankingContainer.innerHTML = '<p class="text-xs text-slate-500 italic py-4 text-center">Noch keine Fütterungsdaten für diese Auswahl vorhanden.</p>';
+                rankingContainer.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">${t('noHistoryFound')}</p>`;
             } else {
                 rankingContainer.innerHTML = '';
                 sortedFoods.forEach(item => {
                     const avg = (item.sumRating / item.count).toFixed(1);
                     const pct = Math.round(((item.sumRating / item.count) / 3) * 100);
-                    const barColor = avg >= 2.5 ? 'bg-emerald-500' : (avg >= 1.8 ? 'bg-amber-500' : 'bg-rose-500');
+                    const barColor = avg >= 2.5 ? 'bg-emerald-500' : (avg >= 1.8 ? 'bg-blue-500' : 'bg-rose-500');
 
                     const div = document.createElement('div');
                     div.className = "bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2";
@@ -982,7 +1628,7 @@
                             <span class="font-semibold text-sm text-white">${item.label}</span>
                             <div class="flex items-center gap-2 text-xs">
                                 <span class="text-emerald-400">😍 ${item.loved}x</span>
-                                <span class="text-amber-400">😐 ${item.ok}x</span>
+                                <span class="text-blue-400">😐 ${item.ok}x</span>
                                 <span class="text-rose-400">🤢 ${item.refused}x</span>
                                 <span class="bg-slate-800 text-slate-200 px-2 py-0.5 rounded font-semibold">Ø ${avg} / 3</span>
                             </div>
@@ -996,7 +1642,7 @@
             }
 
             const triggerCounts = {};
-            vomits.forEach(v => {
+            baseVomits.forEach(v => {
                 if (statsCatFilter !== 'Alle' && v.cat_name !== statsCatFilter && v.cat_name !== 'Unbekannt') return;
                 if (v.recent_feedings && v.recent_feedings.length > 0) {
                     const uniqueInEvent = new Set();
@@ -1013,7 +1659,7 @@
 
             const sortedTriggers = Object.entries(triggerCounts).sort((a, b) => b[1] - a[1]);
             if (sortedTriggers.length === 0) {
-                triggerContainer.innerHTML = '<p class="text-xs text-slate-500 italic py-3 text-center">Bisher wurden keine Futtersorten in den 12 Stunden vor einem Spuck-Ereignis gefunden.</p>';
+                triggerContainer.innerHTML = `<p class="text-xs text-slate-500 italic py-3 text-center">${t('noVomitTriggers')}</p>`;
             } else {
                 triggerContainer.innerHTML = '';
                 sortedTriggers.forEach(([foodLabel, count]) => {
@@ -1022,7 +1668,7 @@
                     row.innerHTML = `
                         <span class="text-sm font-medium text-rose-200">${foodLabel}</span>
                         <span class="text-xs font-bold bg-rose-900/70 text-rose-200 px-2.5 py-1 rounded-lg">
-                            ${count}x vor Spucken gefüttert
+                            ${count}${t('fedBeforeVomit')}
                         </span>
                     `;
                     triggerContainer.appendChild(row);
@@ -1030,16 +1676,39 @@
             }
         }
 
-        // --- TAB 5: STAMMDATEN ---
+        // --- TAB 5: STAMMDATEN (KATZEN, BEGRIFFE, HERSTELLER & FUTTER) ---
         function renderStammdaten() {
+            // 1. Katzen-Liste
+            const catsContainer = document.getElementById('stammdaten-cats-list');
+            if (catsContainer) {
+                catsContainer.innerHTML = '';
+                if (cats.length === 0) {
+                    catsContainer.innerHTML = `<p class="text-xs text-slate-500 italic col-span-2">${t('noCatsHint')}</p>`;
+                } else {
+                    cats.forEach(c => {
+                        const safeName = c.name.replace(/'/g, "\\'");
+                        const div = document.createElement('div');
+                        div.className = "bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between";
+                        div.innerHTML = `
+                            <span class="font-semibold text-sm text-white flex items-center gap-2">🐱 ${c.name}</span>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="editCat(${c.id}, '${safeName}')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition">
+                                    ${t('btnRename')}
+                                </button>
+                                <button onclick="deleteCat(${c.id})" class="px-2.5 py-1 text-xs bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-900/50 rounded-lg transition">
+                                    ${t('btnDelete')}
+                                </button>
+                            </div>
+                        `;
+                        catsContainer.appendChild(div);
+                    });
+                }
+            }
+
+            // 2. Hersteller & Futter
             const container = document.getElementById('stammdaten-list');
             if (!container) return;
             container.innerHTML = '';
-
-            if (manufacturers.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-500 italic text-center py-4">Noch keine Hersteller vorhanden.</p>';
-                return;
-            }
 
             manufacturers.forEach(man => {
                 const manFoods = foods.filter(f => f.manufacturer_id === man.id);
@@ -1050,7 +1719,7 @@
 
                 let foodsHtml = '';
                 if (manFoods.length === 0) {
-                    foodsHtml = '<p class="text-xs text-slate-500 italic">Keine Futtersorten für diesen Hersteller hinterlegt.</p>';
+                    foodsHtml = `<p class="text-xs text-slate-500 italic">${t('noFoodsForMan')}</p>`;
                 } else {
                     foodsHtml = '<ul class="space-y-1.5">';
                     manFoods.forEach(food => {
@@ -1060,10 +1729,10 @@
                                 <span class="text-sm text-slate-200">${food.name}</span>
                                 <div class="flex items-center gap-1.5">
                                     <button onclick="editFood(${food.id}, '${safeFoodName}', ${man.id})" class="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md transition">
-                                        ✏️ Umbenennen
+                                        ${t('btnRename')}
                                     </button>
-                                    <button onclick="deleteFood(${food.id}, '${safeFoodName}')" class="px-2 py-1 text-xs bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-900/50 rounded-md transition">
-                                        🗑️
+                                    <button onclick="deleteFood(${food.id})" class="px-2 py-1 text-xs bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-900/50 rounded-md transition">
+                                        ${t('btnDelete')}
                                     </button>
                                 </div>
                             </li>
@@ -1076,17 +1745,17 @@
                     <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-blue-400 text-sm sm:text-base">${man.name}</span>
-                            <span class="text-xs bg-slate-900 text-slate-400 px-2 py-0.5 rounded-full border border-slate-800">${manFoods.length} Sorten</span>
+                            <span class="text-xs bg-slate-900 text-slate-400 px-2 py-0.5 rounded-full border border-slate-800">${manFoods.length} ${t('varietiesCount')}</span>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <button onclick="promptNewFoodFromStammdaten(${man.id}, '${safeManName}')" class="px-2.5 py-1 text-xs bg-blue-950/70 hover:bg-blue-900 text-blue-300 border border-blue-800/60 rounded-lg transition">
-                                + Sorte
+                            <button onclick="promptNewFoodFromStammdaten(${man.id})" class="px-2.5 py-1 text-xs bg-blue-950/70 hover:bg-blue-900 text-blue-300 border border-blue-800/60 rounded-lg transition">
+                                ${t('btnAddFood')}
                             </button>
                             <button onclick="editManufacturer(${man.id}, '${safeManName}')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition">
-                                ✏️ Hersteller
+                                ${t('btnRename')}
                             </button>
-                            <button onclick="deleteManufacturer(${man.id}, '${safeManName}')" class="px-2.5 py-1 text-xs bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-900/50 rounded-lg transition">
-                                🗑️ Hersteller
+                            <button onclick="deleteManufacturer(${man.id})" class="px-2.5 py-1 text-xs bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-900/50 rounded-lg transition">
+                                ${t('btnDelete')}
                             </button>
                         </div>
                     </div>
@@ -1096,86 +1765,129 @@
             });
         }
 
+        async function promptNewCat() {
+            const name = prompt(t('promptNewCat'));
+            if (!name || !name.trim()) return;
+            const res = await fetch('/api/cats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim() })
+            });
+            if (res.ok) {
+                selectedCats.add(name.trim());
+                await loadAllData(false);
+            }
+        }
+
+        async function editCat(id, currentName) {
+            const newName = prompt(t('promptRenameCat'), currentName);
+            if (!newName || !newName.trim() || newName.trim() === currentName) return;
+            const res = await fetch(`/api/cats/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName.trim() })
+            });
+            if (res.ok) {
+                if (selectedCats.has(currentName)) {
+                    selectedCats.delete(currentName);
+                    selectedCats.add(newName.trim());
+                }
+                await loadAllData(false);
+            }
+        }
+
+        async function deleteCat(id) {
+            if (!confirm(t('confirmDeleteCat'))) return;
+            const res = await fetch(`/api/cats/${id}`, { method: 'DELETE' });
+            if (res.ok) await loadAllData(false);
+        }
+
+        async function saveRatingLabels(e) {
+            e.preventDefault();
+            const r3 = document.getElementById('setting-rating-3').value.trim();
+            const r2 = document.getElementById('setting-rating-2').value.trim();
+            const r1 = document.getElementById('setting-rating-1').value.trim();
+            if (!r3 || !r2 || !r1) return;
+
+            const res = await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating_3: r3, rating_2: r2, rating_1: r1 })
+            });
+            if (res.ok) {
+                settings = await res.json();
+                const toast = document.getElementById('ratings-saved-toast');
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 2000);
+                renderAllViews();
+            }
+        }
+
         async function promptNewManufacturerFromStammdaten() {
-            const name = prompt("Name des neuen Herstellers:");
+            const name = prompt(t('promptNewManufacturer'));
             if (!name || !name.trim()) return;
             const res = await fetch('/api/manufacturers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name.trim() })
             });
-            if (res.ok) await loadAllData();
+            if (res.ok) await loadAllData(false);
         }
 
-        async function promptNewFoodFromStammdaten(manId, manName) {
-            const name = prompt(`Neue Futtersorte für "${manName}" eingeben:`);
+        async function promptNewFoodFromStammdaten(manId) {
+            const name = prompt(t('promptNewFood'));
             if (!name || !name.trim()) return;
             const res = await fetch('/api/foods', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ manufacturer_id: manId, name: name.trim() })
             });
-            if (res.ok) await loadAllData();
+            if (res.ok) await loadAllData(false);
         }
 
         async function editManufacturer(id, currentName) {
-            const newName = prompt("Hersteller umbenennen:", currentName);
+            const newName = prompt(t('promptRenameManufacturer'), currentName);
             if (!newName || !newName.trim() || newName.trim() === currentName) return;
-
             const res = await fetch(`/api/manufacturers/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName.trim() })
             });
-            if (res.ok) {
-                await loadAllData();
-            } else {
-                alert("Fehler beim Umbenennen des Herstellers.");
-            }
+            if (res.ok) await loadAllData(false);
         }
 
-        async function deleteManufacturer(id, name) {
-            if (!confirm(`Hersteller "${name}" inklusive ALLER zugehörigen Futtersorten wirklich löschen?\n\n(Bereits protokollierte Fütterungen in der Historie bleiben erhalten).`)) return;
+        async function deleteManufacturer(id) {
+            if (!confirm(t('confirmDeleteMan'))) return;
             const res = await fetch(`/api/manufacturers/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                await loadAllData();
-            } else {
-                alert("Fehler beim Löschen des Herstellers.");
-            }
+            if (res.ok) await loadAllData(false);
         }
 
         async function editFood(id, currentName, manufacturerId) {
-            const newName = prompt("Futtersorte umbenennen:", currentName);
+            const newName = prompt(t('promptRenameFood'), currentName);
             if (!newName || !newName.trim() || newName.trim() === currentName) return;
-
             const res = await fetch(`/api/foods/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName.trim(), manufacturer_id: manufacturerId })
             });
-            if (res.ok) {
-                await loadAllData();
-            } else {
-                alert("Fehler beim Umbenennen der Futtersorte.");
-            }
+            if (res.ok) await loadAllData(false);
         }
 
-        async function deleteFood(id, name) {
-            if (!confirm(`Futtersorte "${name}" wirklich aus der Auswahl löschen?`)) return;
+        async function deleteFood(id) {
+            if (!confirm(t('confirmDeleteFood'))) return;
             const res = await fetch(`/api/foods/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                await loadAllData();
-            } else {
-                alert("Fehler beim Löschen der Futtersorte.");
-            }
+            if (res.ok) await loadAllData(false);
         }
 
         // --- INITIALISIERUNG ---
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('feeding-timestamp').value = getLocalDatetimeString();
             document.getElementById('vomit-timestamp').value = getLocalDatetimeString();
-            updateCatButtonsUI();
-            loadAllData();
+            ['hide-deleted-history', 'hide-deleted-vomit', 'hide-deleted-stats'].forEach(id => {
+                const cb = document.getElementById(id);
+                if (cb) cb.checked = hideDeletedCats;
+            });
+            loadAllData(true);
         });
     </script>
 </body>
