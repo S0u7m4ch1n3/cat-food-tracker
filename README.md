@@ -53,3 +53,21 @@ Ein selbstgehosteter, mobiler Web-Tracker (PWA) zur lückenlosen Dokumentation u
 ## 🔒 Datenschutz
 
 Persönliche Daten, die lokale SQLite-Datenbank und hochgeladenen Spuck-Fotos verbleiben ausschließlich auf deinem Heimserver und sind über die `.gitignore` vom öffentlichen Upload ausgeschlossen.
+
+---
+
+## Deploy
+
+docker-compose.yml
+
+```bash
+services:
+  cat-food-tracker:
+    image: ghcr.io/s0u7m4ch1n3/cat-food-tracker:latest
+    container_name: cat-food-tracker
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+```
