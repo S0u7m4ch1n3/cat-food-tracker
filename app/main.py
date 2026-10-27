@@ -1,4 +1,7 @@
 import os
+import io
+import csv
+import html
 import sqlite3
 import shutil
 import uuid
@@ -6,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
 from pydantic import BaseModel
 
 app = FastAPI(title="Futter")
@@ -113,11 +116,18 @@ def init_db():
         CREATE TABLE IF NOT EXISTS vomits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cat_name TEXT NOT NULL,
+            vomit_type TEXT DEFAULT 'food',
             timestamp TEXT NOT NULL,
             notes TEXT,
             image_path TEXT
         )
     """)
+
+    # Prüfen, ob vomit_type in einer bestehenden Datenbank nachgerüstet werden muss
+    v_cols = [row["name"] for row in c.execute("PRAGMA table_info(vomits)").fetchall()]
+    if "vomit_type" not in v_cols:
+        c.execute("ALTER TABLE vomits ADD COLUMN vomit_type TEXT DEFAULT 'food'")
+        c.execute("UPDATE vomits SET vomit_type = 'food' WHERE vomit_type IS NULL OR vomit_type = ''")
 
     # Standard-Hersteller & Futter anlegen, falls leer
     c.execute("SELECT COUNT(*) as cnt FROM manufacturers")
@@ -568,6 +578,8 @@ def get_vomits(limit: int = 200):
     result = []
     for r in rows:
         item = dict(r)
+        if not item.get("vomit_type"):
+            item["vomit_type"] = "food"
         item["recent_feedings"] = get_recent_feedings_for_vomit(conn, item["cat_name"], item["timestamp"])
         result.append(item)
     conn.close()
@@ -577,11 +589,13 @@ def get_vomits(limit: int = 200):
 @app.post("/api/vomits")
 async def create_vomit(
     cat_name: str = Form(...),
+    vomit_type: Optional[str] = Form("food"),
     timestamp: Optional[str] = Form(None),
     notes: Optional[str] = Form(""),
     image: Optional[UploadFile] = File(None)
 ):
     ts = timestamp if timestamp else datetime.now().strftime("%Y-%m-%dT%H:%M")
+    v_type = vomit_type if vomit_type in ("food", "bile_grass", "hairball", "other") else "food"
     img_rel_path = None
 
     if image and image.filename:
@@ -595,9 +609,9 @@ async def create_vomit(
     conn = get_db()
     c = conn.cursor()
     c.execute("""
-        INSERT INTO vomits (cat_name, timestamp, notes, image_path)
-        VALUES (?, ?, ?, ?)
-    """, (cat_name, ts, notes, img_rel_path))
+        INSERT INTO vomits (cat_name, vomit_type, timestamp, notes, image_path)
+        VALUES (?, ?, ?, ?, ?)
+    """, (cat_name, v_type, ts, notes, img_rel_path))
     conn.commit()
     new_id = c.lastrowid
     conn.close()
@@ -620,6 +634,482 @@ def delete_vomit(vomit_id: int):
     conn.commit()
     conn.close()
     return {"status": "deleted"}
+
+
+# --- ROUTEN: EXPORT (CSV & PDF-BERICHT) ---
+
+def _vomit_type_label(vtype: str, lang: str = "de") -> str:
+    labels = {
+        "de": {
+            "food": "Unverdautes Futter",
+            "bile_grass": "Galle / Schaum / Gras",
+            "hairball": "Haarballen",
+            "other": "Sonstiges / Unklar"
+        },
+        "en": {
+            "food": "Undigested Food",
+            "bile_grass": "Bile / Foam / Grass",
+            "hairball": "Hairball",
+            "other": "Other / Unclear"
+        }
+    }
+    l_dict = labels["en"] if lang == "en" else labels["de"]
+    return l_dict.get(vtype or "food", l_dict["food"])
+
+
+@app.get("/api/export/csv")
+def export_csv():
+    conn = get_db()
+    settings_rows = conn.execute("SELECT key, value FROM settings").fetchall()
+    s_map = {r["key"]: r["value"] for r in settings_rows}
+    lang = s_map.get("language", "de")
+    r_labels = {
+        3: s_map.get("rating_3", "Weggeatmet"),
+        2: s_map.get("rating_2", "Okay"),
+        1: s_map.get("rating_1", "Verweigert")
+    }
+
+    feedings_rows = conn.execute("SELECT * FROM feedings ORDER BY timestamp DESC, id DESC").fetchall()
+    vomits_rows = conn.execute("SELECT * FROM vomits ORDER BY timestamp DESC").fetchall()
+    conn.close()
+
+    # Vorbereiten der futterrelevanten Spuck-Ereignisse (12h-Fenster)
+    food_vomits = []
+    for v in vomits_rows:
+        vtype = v["vomit_type"] if "vomit_type" in v.keys() and v["vomit_type"] else "food"
+        if vtype in ("food", "other"):
+            try:
+                v_dt = datetime.fromisoformat(v["timestamp"])
+                food_vomits.append((v["cat_name"], v_dt, vtype, v["timestamp"]))
+            except ValueError:
+                pass
+
+    output = io.StringIO()
+    output.write("\ufeff")  # UTF-8 BOM für direkte Lesbarkeit in Excel
+    writer = csv.writer(output, delimiter=";")
+
+    if lang == "en":
+        writer.writerow([
+            "Date", "Time", "Batch_ID", "Brand", "Variety",
+            "Cat", "Rating_Score", "Rating_Label", "Notes", "Food_Vomit_Within_12h"
+        ])
+    else:
+        writer.writerow([
+            "Datum", "Uhrzeit", "Batch_ID", "Hersteller", "Futtersorte",
+            "Katze", "Bewertung_Score", "Bewertung_Text", "Notiz", "Futter_Erbrochen_12h"
+        ])
+
+    for f in feedings_rows:
+        ts_str = f["timestamp"] or ""
+        date_part = ts_str[:10] if len(ts_str) >= 10 else ts_str
+        time_part = ts_str[11:16] if len(ts_str) >= 16 else ""
+
+        vomit_hit = "Nein" if lang != "en" else "No"
+        try:
+            f_dt = datetime.fromisoformat(ts_str)
+            for v_cat, v_dt, v_type, v_ts in food_vomits:
+                if v_cat in (f["cat_name"], "Unbekannt", "Unknown"):
+                    diff_hours = (v_dt - f_dt).total_seconds() / 3600.0
+                    if 0 <= diff_hours <= 12:
+                        vomit_hit = f"{'Ja' if lang != 'en' else 'Yes'} ({v_ts[11:16]} - {_vomit_type_label(v_type, lang)})"
+                        break
+        except ValueError:
+            pass
+
+        writer.writerow([
+            date_part,
+            time_part,
+            f["batch_id"] or "",
+            f["manufacturer_name"],
+            f["food_name"],
+            f["cat_name"],
+            f["rating"],
+            r_labels.get(f["rating"], str(f["rating"])),
+            f["notes"] or "",
+            vomit_hit
+        ])
+
+    filename = f"futter_export_{datetime.now().strftime('%Y-%m-%d')}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+@app.get("/api/export/pdf", response_class=HTMLResponse)
+def export_pdf_report(hide_deleted: bool = False):
+    conn = get_db()
+    s_map = {r["key"]: r["value"] for r in conn.execute("SELECT key, value FROM settings").fetchall()}
+    lang = s_map.get("language", "de")
+    r_labels = {
+        3: s_map.get("rating_3", "Weggeatmet"),
+        2: s_map.get("rating_2", "Okay"),
+        1: s_map.get("rating_1", "Verweigert")
+    }
+
+    active_cats = [r["name"] for r in conn.execute("SELECT name FROM cats ORDER BY id ASC").fetchall()]
+    active_set = set(active_cats)
+
+    all_feedings = [dict(r) for r in conn.execute("SELECT * FROM feedings ORDER BY timestamp DESC, id DESC").fetchall()]
+    all_vomits = [dict(r) for r in conn.execute("SELECT * FROM vomits ORDER BY timestamp DESC").fetchall()]
+    conn.close()
+
+    if hide_deleted:
+        all_feedings = [f for f in all_feedings if f["cat_name"] in active_set]
+        all_vomits = [v for v in all_vomits if v["cat_name"] in active_set or v["cat_name"] in ("Unbekannt", "Unknown")]
+
+    cat_columns = list(active_cats)
+    if not hide_deleted:
+        for f in all_feedings:
+            if f["cat_name"] and f["cat_name"] not in cat_columns:
+                cat_columns.append(f["cat_name"])
+
+    # Futterrelevante Spuck-Ereignisse ermitteln (für Unverträglichkeits-Markierung)
+    food_vomit_events = []
+    vomit_type_counts = {"food": 0, "bile_grass": 0, "hairball": 0, "other": 0}
+    for v in all_vomits:
+        vtype = v.get("vomit_type") or "food"
+        vomit_type_counts[vtype] = vomit_type_counts.get(vtype, 0) + 1
+        if vtype in ("food", "other"):
+            try:
+                food_vomit_events.append((v["cat_name"], datetime.fromisoformat(v["timestamp"]), v))
+            except ValueError:
+                pass
+
+    # --- TEIL 1: GESAMT-AUSWERTUNG ÜBER DEN GESAMTEN ZEITRAUM ---
+    food_summary = {}
+    for f in all_feedings:
+        key = f"{f['manufacturer_name']} – {f['food_name']}"
+        if key not in food_summary:
+            food_summary[key] = {
+                "label": key,
+                "count": 0,
+                "sum_rating": 0,
+                "cat_scores": {},
+                "vomit_hits": 0,
+                "vomit_cats": set()
+            }
+        entry = food_summary[key]
+        entry["count"] += 1
+        entry["sum_rating"] += f["rating"]
+        c_name = f["cat_name"]
+        if c_name not in entry["cat_scores"]:
+            entry["cat_scores"][c_name] = []
+        entry["cat_scores"][c_name].append(f["rating"])
+
+        # Prüfen ob binnen 12h nach dieser Mahlzeit Futter-Erbrechen auftrat
+        try:
+            f_dt = datetime.fromisoformat(f["timestamp"])
+            for v_cat, v_dt, _ in food_vomit_events:
+                if v_cat in (c_name, "Unbekannt", "Unknown"):
+                    diff_h = (v_dt - f_dt).total_seconds() / 3600.0
+                    if 0 <= diff_h <= 12:
+                        entry["vomit_hits"] += 1
+                        entry["vomit_cats"].add(c_name)
+                        break
+        except ValueError:
+            pass
+
+    sorted_foods = sorted(
+        food_summary.values(),
+        key=lambda x: (x["sum_rating"] / x["count"] if x["count"] else 0, x["count"]),
+        reverse=True
+    )
+
+    # --- TEIL 2: LETZTE 30 TAGE FILTERN ---
+    cutoff_dt = datetime.now() - timedelta(days=30)
+    cutoff_str = cutoff_dt.strftime("%Y-%m-%dT%H:%M")
+
+    recent_vomits = [v for v in all_vomits if (v.get("timestamp") or "") >= cutoff_str]
+    recent_feedings = [f for f in all_feedings if (f.get("timestamp") or "") >= cutoff_str]
+
+    # Gruppieren der letzten 30 Tage Fütterungen nach batch_id
+    grouped_30d = []
+    batch_map = {}
+    for f in recent_feedings:
+        b_key = f.get("batch_id") or f"single_{f['id']}"
+        if b_key not in batch_map:
+            grp = {
+                "timestamp": f["timestamp"],
+                "food_label": f"{f['manufacturer_name']} – {f['food_name']}",
+                "notes": f.get("notes") or "",
+                "items": []
+            }
+            batch_map[b_key] = grp
+            grouped_30d.append(grp)
+        batch_map[b_key]["items"].append((f["cat_name"], f["rating"]))
+
+    def fmt_dt(iso_s: str) -> str:
+        try:
+            d = datetime.fromisoformat(iso_s)
+            return d.strftime("%d.%m.%Y %H:%M")
+        except Exception:
+            return iso_s or ""
+
+    # HTML-Tabellenzeilen für Gesamt-Matrix bauen
+    cat_headers_html = "".join(f"<th>🐱 {html.escape(c)}</th>" for c in cat_columns)
+    matrix_rows_html = ""
+    for item in sorted_foods:
+        avg_val = item["sum_rating"] / item["count"] if item["count"] else 0
+        badge_cls = "good" if avg_val >= 2.5 else ("ok" if avg_val >= 1.8 else "bad")
+        cat_cells = ""
+        for c in cat_columns:
+            scores = item["cat_scores"].get(c, [])
+            if not scores:
+                cat_cells += "<td class='muted'>–</td>"
+            else:
+                c_avg = sum(scores) / len(scores)
+                c_cls = "good" if c_avg >= 2.5 else ("ok" if c_avg >= 1.8 else "bad")
+                warn = " ⚠️" if c in item["vomit_cats"] else ""
+                cat_cells += f"<td><span class='pill {c_cls}'>Ø {c_avg:.1f} ({len(scores)}x){warn}</span></td>"
+
+        vomit_cell = (
+            f"<span class='pill bad'>⚠️ {item['vomit_hits']}x</span>"
+            if item["vomit_hits"] > 0
+            else "<span class='muted'>0x</span>"
+        )
+        matrix_rows_html += f"""
+            <tr>
+                <td><strong>{html.escape(item['label'])}</strong></td>
+                <td>{item['count']}</td>
+                <td><span class='pill {badge_cls}'>Ø {avg_val:.2f} / 3.00</span></td>
+                {cat_cells}
+                <td>{vomit_cell}</td>
+            </tr>
+        """
+
+    if not matrix_rows_html:
+        matrix_rows_html = f"<tr><td colspan='{4 + len(cat_columns)}' class='muted'>Keine Fütterungsdaten vorhanden.</td></tr>"
+
+    # HTML-Tabellenzeilen für Spuck-Ereignisse (letzte 30 Tage)
+    vomit_30d_rows = ""
+    for v in recent_vomits:
+        vtype = v.get("vomit_type") or "food"
+        is_rel = vtype in ("food", "other")
+        rel_badge = (
+            f"<span class='pill bad'>🚨 {html.escape(_vomit_type_label(vtype, lang))}</span>"
+            if is_rel
+            else f"<span class='pill neutral'>ℹ️ {html.escape(_vomit_type_label(vtype, lang))}</span>"
+        )
+        vomit_30d_rows += f"""
+            <tr>
+                <td>{fmt_dt(v.get('timestamp', ''))}</td>
+                <td><strong>{html.escape(v.get('cat_name', ''))}</strong></td>
+                <td>{rel_badge}</td>
+                <td>{html.escape(v.get('notes') or '–')}</td>
+            </tr>
+        """
+    if not vomit_30d_rows:
+        vomit_30d_rows = "<tr><td colspan='4' class='muted'>Keine Spuck-Ereignisse in den letzten 30 Tagen.</td></tr>"
+
+    # HTML-Tabellenzeilen für Fütterungen (letzte 30 Tage)
+    feed_30d_rows = ""
+    for g in grouped_30d:
+        ratings_str = ", ".join(
+            f"<strong>{html.escape(c)}:</strong> {html.escape(r_labels.get(r, str(r)))} ({r})"
+            for c, r in g["items"]
+        )
+        feed_30d_rows += f"""
+            <tr>
+                <td style="white-space:nowrap;">{fmt_dt(g['timestamp'])}</td>
+                <td><strong>{html.escape(g['food_label'])}</strong></td>
+                <td>{ratings_str}</td>
+                <td>{html.escape(g['notes'] or '–')}</td>
+            </tr>
+        """
+    if not feed_30d_rows:
+        feed_30d_rows = "<tr><td colspan='4' class='muted'>Keine Fütterungen in den letzten 30 Tagen.</td></tr>"
+
+    total_meals_all = len(all_feedings)
+    overall_avg = f"{(sum(f['rating'] for f in all_feedings) / total_meals_all):.2f}" if total_meals_all else "–"
+    now_str = datetime.now().strftime("%d.%m.%Y %H:%M")
+
+    html_doc = f"""<!DOCTYPE html>
+<html lang="{lang}">
+<head>
+    <meta charset="UTF-8">
+    <title>Futter – Auswertungs- & Tierarztbericht ({now_str})</title>
+    <style>
+        @page {{ size: A4 portrait; margin: 14mm; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #0f172a;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            font-size: 12px;
+            line-height: 1.45;
+        }}
+        .no-print {{
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }}
+        .btn {{
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 12px;
+        }}
+        h1 {{ font-size: 20px; margin: 0 0 4px 0; }}
+        h2 {{
+            font-size: 14px;
+            margin: 22px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #e2e8f0;
+            color: #1e293b;
+        }}
+        .meta {{ color: #64748b; font-size: 11px; margin-bottom: 14px; }}
+        .kpi-grid {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }}
+        .kpi {{
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8fafc;
+        }}
+        .kpi .label {{ font-size: 10px; text-transform: uppercase; color: #64748b; }}
+        .kpi .val {{ font-size: 16px; font-weight: 700; margin-top: 2px; }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 11px;
+        }}
+        th, td {{
+            border: 1px solid #cbd5e1;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+        }}
+        th {{ background: #f1f5f9; font-weight: 600; }}
+        .muted {{ color: #94a3b8; font-style: italic; }}
+        .pill {{
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 10px;
+        }}
+        .pill.good {{ background: #dcfce7; color: #166534; }}
+        .pill.ok {{ background: #dbeafe; color: #1e40af; }}
+        .pill.bad {{ background: #ffe4e6; color: #9f1239; }}
+        .pill.neutral {{ background: #f1f5f9; color: #475569; }}
+        @media print {{
+            body {{ padding: 0; }}
+            .no-print {{ display: none !important; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <div>
+            <strong>🐾 Futter – Druck- & PDF-Ansicht</strong>
+            <span style="margin-left:10px; color:#94a3b8;">Wähle im Druckdialog „Als PDF speichern“.</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button class="btn" onclick="window.print()">🖨️ Als PDF speichern / Drucken</button>
+            <button class="btn" style="background:#475569;" onclick="window.close()">Schließen</button>
+        </div>
+    </div>
+
+    <h1>🐾 Futter – Gesamt-Auswertung & 30-Tage-Bericht</h1>
+    <div class="meta">
+        Erstellt am: {now_str} Uhr | Aktive Katzen: {", ".join(active_cats) if active_cats else "–"} |
+        Bewertungs-Skala: 3 = {html.escape(r_labels[3])}, 2 = {html.escape(r_labels[2])}, 1 = {html.escape(r_labels[1])}
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi">
+            <div class="label">Gesamte Katzen-Mahlzeiten</div>
+            <div class="val">{total_meals_all}</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Ø Akzeptanz (Gesamt)</div>
+            <div class="val">{overall_avg} / 3.00</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Spuck-Vorfälle (Gesamt)</div>
+            <div class="val">{len(all_vomits)} (davon {vomit_type_counts.get('food', 0)}x Futter)</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Einträge letzte 30 Tage</div>
+            <div class="val">{len(grouped_30d)} Runden / {len(recent_vomits)}x Spucken</div>
+        </div>
+    </div>
+
+    <h2>1. Generelle Futter-Auswertung & Akzeptanz-Matrix (Gesamter Zeitraum)</h2>
+    <p class="meta">
+        Zeigt für jede Futtersorte die durchschnittliche Bewertung pro Katze über den gesamten Zeitraum.
+        <strong>⚠️ Futter-Spucken (12h)</strong> zählt ausschließlich futterrelevante Spuck-Ereignisse (ohne Haarballen oder Galle/Gras).
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Hersteller & Futtersorte</th>
+                <th>Portionen</th>
+                <th>Ø Gesamt</th>
+                {cat_headers_html}
+                <th>Futter-Spucken (12h)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {matrix_rows_html}
+        </tbody>
+    </table>
+
+    <h2>2. Spuck-Ereignisse der letzten 30 Tage</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:130px;">Zeitpunkt</th>
+                <th style="width:120px;">Katze</th>
+                <th style="width:190px;">Art / Kategorie</th>
+                <th>Notiz / Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {vomit_30d_rows}
+        </tbody>
+    </table>
+
+    <h2>3. Chronologische Fütterungen der letzten 30 Tage (Gruppiert nach Mahlzeit)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:130px;">Zeitpunkt</th>
+                <th style="width:220px;">Hersteller & Sorte</th>
+                <th>Katzen & Einzelbewertung</th>
+                <th style="width:160px;">Notiz</th>
+            </tr>
+        </thead>
+        <tbody>
+            {feed_30d_rows}
+        </tbody>
+    </table>
+
+    <script>
+        window.addEventListener('load', () => {{
+            setTimeout(() => window.print(), 350);
+        }});
+    </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html_doc)
 
 
 # --- STATISCHE DATEIEN & FRONTEND ---

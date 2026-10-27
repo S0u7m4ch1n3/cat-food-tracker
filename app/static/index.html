@@ -65,6 +65,15 @@
                     <span id="feed-toast" class="hidden text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700 px-3 py-1 rounded-full"></span>
                 </div>
 
+                <!-- Rotations-Vorschlag ("Was gibt's heute?") -->
+                <div id="rotation-suggestions-box" class="hidden mb-5 bg-slate-950 border border-slate-800/90 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="i18n-rotation-title" class="text-xs font-semibold text-emerald-400 uppercase tracking-wider"></span>
+                        <span id="i18n-rotation-subtitle" class="text-[11px] text-slate-400"></span>
+                    </div>
+                    <div id="rotation-suggestions-list" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+                </div>
+
                 <form id="feeding-form" onsubmit="submitFeeding(event)" class="space-y-5">
                     <!-- Katzen-Auswahl -->
                     <div>
@@ -134,10 +143,14 @@
                 </h2>
 
                 <form id="vomit-form" onsubmit="submitVomit(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label id="i18n-vomit-which-cat" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
                             <select id="vomit-cat" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500"></select>
+                        </div>
+                        <div>
+                            <label id="i18n-vomit-type-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
+                            <select id="vomit-type" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500"></select>
                         </div>
                         <div>
                             <label id="i18n-vomit-timestamp-label" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"></label>
@@ -208,6 +221,20 @@
         <!-- TAB 4: AUSWERTUNG & STATISTIK              -->
         <!-- ========================================== -->
         <section id="tab-stats" class="hidden space-y-6">
+            <!-- Export-Panel (CSV & PDF) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                        <span>📥</span> <span id="i18n-export-title"></span>
+                    </h2>
+                    <p id="i18n-export-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <a href="/api/export/csv" id="i18n-btn-export-csv" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-sm inline-flex items-center gap-1.5"></a>
+                    <button type="button" onclick="openPdfReport()" id="i18n-btn-export-pdf" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm inline-flex items-center gap-1.5"></button>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="stats-kpi-cards"></div>
 
             <!-- Futter-Ranking -->
@@ -229,6 +256,17 @@
                 </div>
 
                 <div id="stats-food-ranking" class="space-y-3"></div>
+            </div>
+
+            <!-- Gruppen-Akzeptanz-Matrix (Wer frisst was?) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <div class="mb-4 pb-3 border-b border-slate-800">
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <span>🐾</span> <span id="i18n-stats-matrix-title"></span>
+                    </h2>
+                    <p id="i18n-stats-matrix-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
+                </div>
+                <div id="stats-acceptance-matrix" class="overflow-x-auto"></div>
             </div>
 
             <!-- Spuck-Korrelation -->
@@ -426,6 +464,10 @@
                 tabStammdaten: "⚙️ Stammdaten",
                 newMealTitle: "Neue Mahlzeit eintragen",
                 savedToast: "✅ Gespeichert!",
+                rotationTitle: "💡 Rotations-Vorschlag: Was gibt's heute?",
+                rotationSubtitle: "Gut bewertet, verträglich & am längsten nicht im Napf",
+                daysAgo: "Vor {n}d",
+                todayAgo: "Heute",
                 selectCats: "Katzen auswählen",
                 toggleAllCats: "Alle an-/abwählen",
                 noCatsHint: "Noch keine Katzen angelegt. Bitte unter '⚙️ Stammdaten' anlegen.",
@@ -442,6 +484,12 @@
                 noMealsYet: "Noch keine Mahlzeiten eingetragen.",
                 vomitTitle: "Spuck-Ereignis dokumentieren",
                 whichCat: "Welche Katze?",
+                vomitTypeLabel: "Art / Ursache",
+                vomitTypeFood: "🍖 Unverdautes Futter (futterrelevant)",
+                vomitTypeBile: "🌱 Galle / Schaum / Gras",
+                vomitTypeHairball: "🧶 Haarballen",
+                vomitTypeOther: "❓ Sonstiges / Unklar",
+                vomitNonFoodHint: "ℹ️ Nicht als Futter-Unverträglichkeit gewertet (Galle/Gras/Haarballen).",
                 unknownCat: "❓ Unbekannt (Fundstück)",
                 photoOptional: "Foto (optional)",
                 vomitNotes: "Details / Aussehen",
@@ -458,15 +506,21 @@
                 noHistoryFound: "Keine Fütterungen für diesen Filter gefunden.",
                 catSingular: "Katze",
                 catPlural: "Katzen",
+                exportTitle: "Daten-Export & Berichte",
+                exportSubtitle: "Kompletter CSV-Export für Excel oder druckfertiger PDF-Bericht (Gesamt-Auswertung & letzte 30 Tage).",
+                btnExportCsv: "📄 CSV-Export",
+                btnExportPdf: "🖨️ PDF-Bericht (30 Tage & Gesamt)",
                 kpiMeals: "Erfasste Katzen-Mahlzeiten",
                 kpiAvg: "Ø Akzeptanz (1 bis 3)",
                 kpiVomits: "Spuck-Ereignisse",
                 statsRankingTitle: "Futter-Beliebtheit & Akzeptanz",
                 statsRankingSubtitle: "Welche Sorten werden am liebsten gefressen?",
-                statsRadarTitle: "Unverträglichkeits-Radar (12h vor Spuck-Ereignis)",
-                statsRadarSubtitle: "Zeigt an, welches Futter wie oft in den 12 Stunden vor einem Spuck-Ereignis gefüttert wurde.",
-                noVomitTriggers: "Bisher wurden keine Futtersorten in den 12 Stunden vor einem Spuck-Ereignis gefunden.",
-                fedBeforeVomit: "x vor Spucken gefüttert",
+                statsMatrixTitle: "Gruppen-Akzeptanz-Matrix (Wer frisst was?)",
+                statsMatrixSubtitle: "Durchschnittliche Bewertung pro Katze über den gesamten Zeitraum (⚠️ = Futter-Erbrechen binnen 12h).",
+                statsRadarTitle: "Unverträglichkeits-Radar (12h vor Futter-Erbrechen)",
+                statsRadarSubtitle: "Berücksichtigt nur futterrelevantes Erbrechen (Galle/Gras und Haarballen werden herausgefiltert).",
+                noVomitTriggers: "Bisher wurden keine Futtersorten vor einem futterrelevanten Spuck-Ereignis gefunden.",
+                fedBeforeVomit: "x vor Futter-Spucken gefüttert",
                 stammCatsTitle: "Katzen verwalten",
                 stammCatsSubtitle: "Beim Umbenennen wird die Historie aktualisiert. Beim Löschen bleibt die Historie erhalten (kann ausgeblendet werden).",
                 btnAddCat: "+ Neue Katze",
@@ -509,6 +563,10 @@
                 tabStammdaten: "⚙️ Master Data",
                 newMealTitle: "Log New Meal",
                 savedToast: "✅ Saved!",
+                rotationTitle: "💡 Rotation Suggestion: What's for today?",
+                rotationSubtitle: "Well rated, tolerated & longest time since last fed",
+                daysAgo: "{n}d ago",
+                todayAgo: "Today",
                 selectCats: "Select Cats",
                 toggleAllCats: "Select / Deselect All",
                 noCatsHint: "No cats created yet. Please add them under '⚙️ Master Data'.",
@@ -525,6 +583,12 @@
                 noMealsYet: "No meals logged yet.",
                 vomitTitle: "Log Vomit Incident",
                 whichCat: "Which Cat?",
+                vomitTypeLabel: "Type / Cause",
+                vomitTypeFood: "🍖 Undigested Food (food-related)",
+                vomitTypeBile: "🌱 Bile / Foam / Grass",
+                vomitTypeHairball: "🧶 Hairball",
+                vomitTypeOther: "❓ Other / Unclear",
+                vomitNonFoodHint: "ℹ️ Not counted as food intolerance (bile/grass/hairball).",
                 unknownCat: "❓ Unknown",
                 photoOptional: "Photo (optional)",
                 vomitNotes: "Details / Appearance",
@@ -541,15 +605,21 @@
                 noHistoryFound: "No feedings found for this filter.",
                 catSingular: "cat",
                 catPlural: "cats",
+                exportTitle: "Data Export & Reports",
+                exportSubtitle: "Complete CSV export for Excel or printable PDF report (All-time summary & last 30 days).",
+                btnExportCsv: "📄 CSV Export",
+                btnExportPdf: "🖨️ PDF Report (30 Days & All-Time)",
                 kpiMeals: "Recorded Cat Meals",
                 kpiAvg: "Avg. Acceptance (1 to 3)",
                 kpiVomits: "Vomit Incidents",
                 statsRankingTitle: "Food Popularity & Acceptance",
                 statsRankingSubtitle: "Which varieties are enjoyed the most?",
-                statsRadarTitle: "Intolerance Radar (12h prior to vomiting)",
-                statsRadarSubtitle: "Shows which food was fed how often within 12 hours before a vomit incident.",
-                noVomitTriggers: "No food varieties found within 12 hours before a vomit incident yet.",
-                fedBeforeVomit: "x fed prior to vomiting",
+                statsMatrixTitle: "Group Acceptance Matrix (Who eats what?)",
+                statsMatrixSubtitle: "Average rating per cat across all time (⚠️ = food vomit within 12h).",
+                statsRadarTitle: "Intolerance Radar (12h prior to food vomiting)",
+                statsRadarSubtitle: "Only counts food-related vomiting (bile/grass and hairballs are filtered out).",
+                noVomitTriggers: "No food varieties found prior to a food-related vomit incident yet.",
+                fedBeforeVomit: "x fed prior to food vomiting",
                 stammCatsTitle: "Manage Cats",
                 stammCatsSubtitle: "Renaming updates all history records. Deleting keeps history records (can be hidden via toggle).",
                 btnAddCat: "+ Add Cat",
@@ -624,6 +694,25 @@
             return `<span class="px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800/60 text-xs">🤢 ${settings.rating_1}</span>`;
         }
 
+        function getVomitTypeBadge(vtype) {
+            const vt = vtype || 'food';
+            if (vt === 'bile_grass') {
+                return `<span class="px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-800/60 text-xs">${t('vomitTypeBile')}</span>`;
+            }
+            if (vt === 'hairball') {
+                return `<span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 text-xs">${t('vomitTypeHairball')}</span>`;
+            }
+            if (vt === 'other') {
+                return `<span class="px-2 py-0.5 rounded-md bg-purple-950/80 text-purple-300 border border-purple-800/60 text-xs">${t('vomitTypeOther')}</span>`;
+            }
+            return `<span class="px-2 py-0.5 rounded-md bg-rose-950/80 text-rose-300 border border-rose-800/60 text-xs">${t('vomitTypeFood')}</span>`;
+        }
+
+        function isFoodRelatedVomit(v) {
+            const vt = v.vomit_type || 'food';
+            return vt === 'food' || vt === 'other';
+        }
+
         function getLocalDatetimeString() {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -640,6 +729,11 @@
                    d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) + suffix;
         }
 
+        function openPdfReport() {
+            const url = `/api/export/pdf?hide_deleted=${hideDeletedCats ? 'true' : 'false'}`;
+            window.open(url, '_blank');
+        }
+
         // --- SPRACHE & UI-TEXTE ANWENDEN ---
         function applyTranslations() {
             const langLabel = settings.language === 'en' ? '🇬🇧 EN' : '🇩🇪 DE';
@@ -654,6 +748,8 @@
 
             document.getElementById('i18n-new-meal-title').textContent = t('newMealTitle');
             document.getElementById('feed-toast').textContent = t('savedToast');
+            document.getElementById('i18n-rotation-title').textContent = t('rotationTitle');
+            document.getElementById('i18n-rotation-subtitle').textContent = t('rotationSubtitle');
             document.getElementById('i18n-select-cats').textContent = t('selectCats');
             document.getElementById('i18n-toggle-all-cats').textContent = t('toggleAllCats');
             document.getElementById('i18n-label-manufacturer').textContent = t('manufacturer');
@@ -668,6 +764,7 @@
 
             document.getElementById('i18n-vomit-title').textContent = t('vomitTitle');
             document.getElementById('i18n-vomit-which-cat').textContent = t('whichCat');
+            document.getElementById('i18n-vomit-type-label').textContent = t('vomitTypeLabel');
             document.getElementById('i18n-vomit-timestamp-label').textContent = t('timestamp');
             document.getElementById('i18n-vomit-photo-label').textContent = t('photoOptional');
             document.getElementById('i18n-vomit-notes-label').textContent = t('vomitNotes');
@@ -675,11 +772,20 @@
             document.getElementById('i18n-btn-save-vomit').textContent = t('saveVomitBtn');
             document.getElementById('i18n-vomit-history-title').textContent = t('vomitHistoryTitle');
 
+            populateVomitTypeSelect();
+
             document.getElementById('i18n-history-title').textContent = t('historyTitle');
             document.getElementById('i18n-history-subtitle').textContent = t('historySubtitle');
 
+            document.getElementById('i18n-export-title').textContent = t('exportTitle');
+            document.getElementById('i18n-export-subtitle').textContent = t('exportSubtitle');
+            document.getElementById('i18n-btn-export-csv').textContent = t('btnExportCsv');
+            document.getElementById('i18n-btn-export-pdf').textContent = t('btnExportPdf');
+
             document.getElementById('i18n-stats-ranking-title').textContent = t('statsRankingTitle');
             document.getElementById('i18n-stats-ranking-subtitle').textContent = t('statsRankingSubtitle');
+            document.getElementById('i18n-stats-matrix-title').textContent = t('statsMatrixTitle');
+            document.getElementById('i18n-stats-matrix-subtitle').textContent = t('statsMatrixSubtitle');
             document.getElementById('i18n-stats-radar-title').textContent = t('statsRadarTitle');
             document.getElementById('i18n-stats-radar-subtitle').textContent = t('statsRadarSubtitle');
 
@@ -872,13 +978,107 @@
         function renderAllViews() {
             populateManufacturerSelect(lastValidManufacturerId);
             populateVomitCatSelect();
+            populateVomitTypeSelect();
             renderCatButtons();
+            renderRotationSuggestions();
             renderFilterButtons();
             renderRecentPreview();
             renderFeedingsHistory();
             renderVomitsList();
             renderStammdaten();
             renderStats();
+        }
+
+        // --- ROTATIONS-VORSCHLAG ("WAS GIBT'S HEUTE?") ---
+        function renderRotationSuggestions() {
+            const box = document.getElementById('rotation-suggestions-box');
+            const list = document.getElementById('rotation-suggestions-list');
+            if (!box || !list) return;
+
+            if (allFeedings.length === 0 || foods.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            // Futterrelevante Spuck-Auslöser zählen
+            const vomitTriggerMap = {};
+            vomits.filter(isFoodRelatedVomit).forEach(v => {
+                if (v.recent_feedings && v.recent_feedings.length > 0) {
+                    const uniqueKeys = new Set();
+                    v.recent_feedings.forEach(rf => uniqueKeys.add(`${rf.manufacturer_name}|||${rf.food_name}`));
+                    uniqueKeys.forEach(k => { vomitTriggerMap[k] = (vomitTriggerMap[k] || 0) + 1; });
+                }
+            });
+
+            // Statistik pro bekanntem Futter berechnen
+            const statsByFood = {};
+            allFeedings.forEach(f => {
+                const key = `${f.manufacturer_name}|||${f.food_name}`;
+                if (!statsByFood[key]) {
+                    statsByFood[key] = {
+                        manId: f.manufacturer_id,
+                        foodId: f.food_id,
+                        manName: f.manufacturer_name,
+                        foodName: f.food_name,
+                        count: 0,
+                        sumRating: 0,
+                        lastTimestamp: f.timestamp
+                    };
+                }
+                statsByFood[key].count++;
+                statsByFood[key].sumRating += f.rating;
+                if (f.timestamp > statsByFood[key].lastTimestamp) {
+                    statsByFood[key].lastTimestamp = f.timestamp;
+                }
+            });
+
+            // Nur Sorten empfehlen, die noch im Stammadaten-Bestand existieren, Ø >= 2.0 haben und keine hohe Spuck-Quote aufweisen
+            const now = new Date();
+            const candidates = Object.entries(statsByFood)
+                .map(([key, item]) => {
+                    const avg = item.sumRating / item.count;
+                    const vomitHits = vomitTriggerMap[key] || 0;
+                    const existsInStamm = foods.some(fd => fd.id === item.foodId);
+                    const lastDt = new Date(item.lastTimestamp);
+                    const daysAgo = Math.max(0, Math.floor((now - lastDt) / (1000 * 60 * 60 * 24)));
+                    return { ...item, avg, vomitHits, existsInStamm, daysAgo };
+                })
+                .filter(c => c.existsInStamm && c.avg >= 2.0 && c.vomitHits === 0)
+                .sort((a, b) => {
+                    if (b.daysAgo !== a.daysAgo) return b.daysAgo - a.daysAgo;
+                    return b.avg - a.avg;
+                })
+                .slice(0, 3);
+
+            if (candidates.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            box.classList.remove('hidden');
+            list.innerHTML = '';
+            candidates.forEach(c => {
+                const daysLabel = c.daysAgo === 0 ? t('todayAgo') : t('daysAgo').replace('{n}', c.daysAgo);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => selectSuggestedFood(c.manId, c.foodId);
+                btn.className = "text-left bg-slate-900 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-700/70 rounded-xl p-2.5 transition flex flex-col justify-between gap-1";
+                btn.innerHTML = `
+                    <div class="text-xs font-semibold text-white truncate">${c.manName} – ${c.foodName}</div>
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="text-emerald-400 font-medium">★ Ø ${c.avg.toFixed(1)}</span>
+                        <span class="text-slate-400">🕒 ${daysLabel}</span>
+                    </div>
+                `;
+                list.appendChild(btn);
+            });
+        }
+
+        function selectSuggestedFood(manId, foodId) {
+            lastValidManufacturerId = manId;
+            lastValidFoodId = foodId;
+            populateManufacturerSelect(manId);
+            populateFoodSelect(foodId);
         }
 
         // --- KATZEN & INDIVIDUELLE BEWERTUNGEN (STANDARD: OKAY = BLAU) ---
@@ -984,6 +1184,19 @@
             if (prev && Array.from(sel.options).some(o => o.value === prev)) {
                 sel.value = prev;
             }
+        }
+
+        function populateVomitTypeSelect() {
+            const sel = document.getElementById('vomit-type');
+            if (!sel) return;
+            const prev = sel.value || 'food';
+            sel.innerHTML = `
+                <option value="food">${t('vomitTypeFood')}</option>
+                <option value="bile_grass">${t('vomitTypeBile')}</option>
+                <option value="hairball">${t('vomitTypeHairball')}</option>
+                <option value="other">${t('vomitTypeOther')}</option>
+            `;
+            sel.value = prev;
         }
 
         function populateManufacturerSelect(selectedId = null) {
@@ -1458,6 +1671,7 @@
             e.preventDefault();
             const formData = new FormData();
             formData.append('cat_name', document.getElementById('vomit-cat').value);
+            formData.append('vomit_type', document.getElementById('vomit-type').value);
             formData.append('timestamp', document.getElementById('vomit-timestamp').value);
             formData.append('notes', document.getElementById('vomit-notes').value.trim());
 
@@ -1473,6 +1687,7 @@
 
             if (res.ok) {
                 document.getElementById('vomit-notes').value = '';
+                document.getElementById('vomit-type').value = 'food';
                 fileInput.value = '';
                 document.getElementById('vomit-timestamp').value = getLocalDatetimeString();
                 await loadAllData(false);
@@ -1496,7 +1711,13 @@
 
             filteredVomits.forEach(v => {
                 let correlationHtml = '';
-                if (v.recent_feedings && v.recent_feedings.length > 0) {
+                if (!isFoodRelatedVomit(v)) {
+                    correlationHtml = `
+                        <div class="mt-2 text-xs text-slate-400 italic">
+                            ${t('vomitNonFoodHint')}
+                        </div>
+                    `;
+                } else if (v.recent_feedings && v.recent_feedings.length > 0) {
                     const items = v.recent_feedings.map(rf =>
                         `<li class="text-xs text-amber-200/90">• <strong>${rf.cat_name}</strong>: ${rf.manufacturer_name} – ${rf.food_name} <span class="text-slate-400">(${formatDisplayDate(rf.timestamp)})</span></li>`
                     ).join('');
@@ -1520,8 +1741,9 @@
                 card.innerHTML = `
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <span class="font-bold text-sm text-rose-400">🤮 ${displayCat}</span>
+                                ${getVomitTypeBadge(v.vomit_type)}
                                 <span class="text-xs text-slate-400">🕒 ${formatDisplayDate(v.timestamp)}</span>
                             </div>
                             <button onclick="deleteVomit(${v.id})" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-slate-900 border border-slate-800">
@@ -1551,6 +1773,7 @@
         function renderStats() {
             const kpiContainer = document.getElementById('stats-kpi-cards');
             const rankingContainer = document.getElementById('stats-food-ranking');
+            const matrixContainer = document.getElementById('stats-acceptance-matrix');
             const triggerContainer = document.getElementById('stats-vomit-triggers');
             if (!kpiContainer || !rankingContainer || !triggerContainer) return;
 
@@ -1571,9 +1794,11 @@
             let baseVomits = hideDeletedCats
                 ? vomits.filter(v => v.cat_name === 'Unbekannt' || activeSet.has(v.cat_name))
                 : vomits;
-            const totalVomits = statsCatFilter === 'Alle'
-                ? baseVomits.length
-                : baseVomits.filter(v => v.cat_name === statsCatFilter).length;
+            const filteredVomitsForKpi = statsCatFilter === 'Alle'
+                ? baseVomits
+                : baseVomits.filter(v => v.cat_name === statsCatFilter);
+            const totalVomits = filteredVomitsForKpi.length;
+            const foodVomitsCount = filteredVomitsForKpi.filter(isFoodRelatedVomit).length;
 
             const filterLabel = statsCatFilter === 'Alle' ? t('allFilter') : statsCatFilter;
 
@@ -1588,7 +1813,7 @@
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
                     <p class="text-xs text-slate-400 uppercase">${t('kpiVomits')} (${filterLabel})</p>
-                    <p class="text-2xl font-bold text-rose-400 mt-1">${totalVomits}</p>
+                    <p class="text-2xl font-bold text-rose-400 mt-1">${totalVomits} <span class="text-xs text-slate-400 font-normal">(🍖 ${foodVomitsCount}x)</span></p>
                 </div>
             `;
 
@@ -1641,8 +1866,75 @@
                 });
             }
 
+            // Gruppen-Akzeptanz-Matrix aufbauen
+            if (matrixContainer) {
+                const matrixCats = cats.map(c => c.name);
+                if (!hideDeletedCats) {
+                    baseFeedings.forEach(f => {
+                        if (f.cat_name && !matrixCats.includes(f.cat_name)) matrixCats.push(f.cat_name);
+                    });
+                }
+
+                const vomitPairSet = new Set();
+                baseVomits.filter(isFoodRelatedVomit).forEach(v => {
+                    if (v.recent_feedings) {
+                        v.recent_feedings.forEach(rf => {
+                            vomitPairSet.add(`${rf.manufacturer_name} – ${rf.food_name}|||${rf.cat_name}`);
+                        });
+                    }
+                });
+
+                const matrixMap = {};
+                baseFeedings.forEach(f => {
+                    const key = `${f.manufacturer_name} – ${f.food_name}`;
+                    if (!matrixMap[key]) matrixMap[key] = { label: key, total: 0, sum: 0, byCat: {} };
+                    matrixMap[key].total++;
+                    matrixMap[key].sum += f.rating;
+                    if (!matrixMap[key].byCat[f.cat_name]) matrixMap[key].byCat[f.cat_name] = [];
+                    matrixMap[key].byCat[f.cat_name].push(f.rating);
+                });
+
+                const matrixRows = Object.values(matrixMap).sort((a, b) => (b.sum / b.total) - (a.sum / a.total));
+                if (matrixRows.length === 0 || matrixCats.length === 0) {
+                    matrixContainer.innerHTML = `<p class="text-xs text-slate-500 italic py-3 text-center">${t('noHistoryFound')}</p>`;
+                } else {
+                    const headers = matrixCats.map(c => `<th class="px-3 py-2 text-left text-xs font-semibold text-slate-300 border-b border-slate-800">🐱 ${c}</th>`).join('');
+                    const bodyRows = matrixRows.map(row => {
+                        const cells = matrixCats.map(c => {
+                            const scores = row.byCat[c] || [];
+                            if (scores.length === 0) return `<td class="px-3 py-2 text-xs text-slate-600 border-b border-slate-800/60">–</td>`;
+                            const avg = (scores.reduce((x, y) => x + y, 0) / scores.length).toFixed(1);
+                            const cls = avg >= 2.5
+                                ? 'bg-emerald-950 text-emerald-300 border-emerald-800/70'
+                                : (avg >= 1.8 ? 'bg-blue-950 text-blue-200 border-blue-800/70' : 'bg-rose-950 text-rose-300 border-rose-800/70');
+                            const hasVomit = vomitPairSet.has(`${row.label}|||${c}`);
+                            return `<td class="px-3 py-2 text-xs border-b border-slate-800/60"><span class="px-2 py-0.5 rounded border ${cls} font-semibold">Ø ${avg} (${scores.length}x)${hasVomit ? ' ⚠️' : ''}</span></td>`;
+                        }).join('');
+                        return `
+                            <tr class="hover:bg-slate-950/60">
+                                <td class="px-3 py-2 text-xs font-semibold text-white border-b border-slate-800/60">${row.label}</td>
+                                ${cells}
+                            </tr>
+                        `;
+                    }).join('');
+
+                    matrixContainer.innerHTML = `
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-slate-950">
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-300 border-b border-slate-800">${t('manufacturer')} & ${t('food')}</th>
+                                    ${headers}
+                                </tr>
+                            </thead>
+                            <tbody>${bodyRows}</tbody>
+                        </table>
+                    `;
+                }
+            }
+
+            // Unverträglichkeits-Radar (nur futterrelevante Spuck-Vorfälle!)
             const triggerCounts = {};
-            baseVomits.forEach(v => {
+            baseVomits.filter(isFoodRelatedVomit).forEach(v => {
                 if (statsCatFilter !== 'Alle' && v.cat_name !== statsCatFilter && v.cat_name !== 'Unbekannt') return;
                 if (v.recent_feedings && v.recent_feedings.length > 0) {
                     const uniqueInEvent = new Set();
