@@ -17,6 +17,7 @@ app = FastAPI(title="Futter")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 DATA_DIR = "/app/data"
+DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 DB_PATH = os.path.join(DATA_DIR, "tracker.db")
 
